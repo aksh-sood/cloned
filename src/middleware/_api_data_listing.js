@@ -1,5 +1,6 @@
 let Joi = require("joi");
 import admin from "../firebase/firebaseConfig";
+import { validate } from "joi";
 const AWS = require("aws-sdk");
 
 //configuring the AWS environment
@@ -300,7 +301,7 @@ const routes = [
 	},
 	{
 		method: "GET",
-		path: "/api/cart/{id}",
+		path: "/api/cart/{user_id}",
 		config: {
 			tags: ["api", "Cart"],
 			description: "Get cart data by user id",
@@ -308,7 +309,7 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				const id = request.params.id;
+				const id = request.params.user_id;
 				try {
 					var cartDoc = await db
 						.collection("cart")
@@ -332,18 +333,27 @@ const routes = [
 	},
 	{
 		method: "POST",
-		path: "/api/cart/{id}",
+		path: "/api/cart/{user_id}",
 		config: {
 			tags: ["api", "Cart"],
 			description: "Add to cart",
-			notes: "Send product details to add to cart"
+			notes: "Send product details to add to cart",
+			validate: {
+				payload: {
+					product_id: Joi.string(),
+					quantity: Joi.string()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
 					await db
 						.collection("cart")
-						.doc(request.params.id)
+						.doc(request.params.user_id)
 						.collection("items")
 						.doc(request.payload.product_id)
 						.set({ quantity: request.payload.quantity });
@@ -357,18 +367,27 @@ const routes = [
 	},
 	{
 		method: "PUT",
-		path: "/api/cart/{id}",
+		path: "/api/cart/{user_id}",
 		config: {
 			tags: ["api", "Cart"],
-			description: "Add to cart",
-			notes: "Edit cart details"
+			description: "Update cart",
+			notes: "Edit cart details",
+			validate: {
+				payload: {
+					product_id: Joi.string().optional(),
+					quantity: Joi.string().optional()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
 					await db
 						.collection("cart")
-						.doc(request.params.id)
+						.doc(request.params.user_id)
 						.collection("items")
 						.doc(request.payload.product_id)
 						.set({ quantity: request.payload.quantity });
@@ -382,11 +401,17 @@ const routes = [
 	},
 	{
 		method: "DELETE",
-		path: "/api/cart/{id}/by-product-id/{product_id}",
+		path: "/api/cart/{user_id}/by-product-id/{product_id}",
 		config: {
 			tags: ["api", "Cart"],
 			description: "Delete product from cart by id",
 			notes: "Delete product from cart",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string(),
+					product_id: Joi.string()
+				})
+			},
 			handler: async (request, reply) => {
 				let pr = async (resolve, reject) => {
 					try {
