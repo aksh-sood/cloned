@@ -88,13 +88,7 @@ const routes = [
 			payload: {
 				output: "stream",
 				parse: true,
-				allow: "multipart/form-data",
-				maxBytes: 1048576
-			},
-			validate: {
-				payload: Joi.object({
-					files: Joi.any().meta({ swaggerType: "file" })
-				})
+				allow: "multipart/form-data"
 			}
 		},
 		handler: async (request, reply) => {
@@ -138,7 +132,6 @@ const routes = [
 					discounted_price: request.payload.discounted_price,
 					discount: request.payload.discount,
 					category: request.payload.category,
-					type: request.payload.type,
 					values: request.payload.values,
 					highlights: request.payload.highlights,
 					specs: request.payload.specs,
