@@ -8,10 +8,7 @@ AWS.config.update({
 	secretAccessKey: "RGA1R1AJBVx0vGKqCBmnGD5xw+MtgqIW/DXSyLRa"
 });
 var db = admin.firestore();
-var bucketName = "brandedbabapwa.appspot.com";
-var bucket = admin.storage().bucket("gs://brandedbabapwa.appspot.com");
-var dirname = __dirname;
-import path from "path";
+
 const routes = [
 	{
 		method: "GET",
@@ -80,18 +77,24 @@ const routes = [
 		method: "POST",
 		path: "/api/products",
 		config: {
+			plugins: {
+				"hapi-swagger": {
+					payloadType: "form"
+				}
+			},
 			tags: ["api", "Products"],
 			description: "Upload product data",
 			notes: "Upload product data",
 			payload: {
 				output: "stream",
 				parse: true,
-				allow: "multipart/form-data"
+				allow: "multipart/form-data",
+				maxBytes: 1048576
 			},
 			validate: {
-				payload: {
-					files: Joi.array().single()
-				}
+				payload: Joi.object({
+					files: Joi.any().meta({ swaggerType: "file" })
+				})
 			}
 		},
 		handler: async (request, reply) => {
