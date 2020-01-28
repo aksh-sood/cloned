@@ -1,6 +1,5 @@
 let Joi = require("joi");
 import admin from "../firebase/firebaseConfig";
-import { validate } from "joi";
 const AWS = require("aws-sdk");
 
 //configuring the AWS environment
@@ -124,6 +123,7 @@ const routes = [
 					description: request.payload.description,
 					type: request.payload.price,
 					images: fileLinks,
+					category_id: request.payload.category_id,
 					inStock: request.payload.inStock,
 					seller: request.payload.seller,
 					stars: request.payload.stars,
@@ -170,8 +170,6 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				var databaseRef = firebase.database();
-				var newProductRef = databaseRef.ref("products/" + request.params.id);
 				let newProduct = {};
 				if (request.payload.files) {
 					const files = request.payload.files;
@@ -204,6 +202,7 @@ const routes = [
 						description: request.payload.description,
 						type: request.payload.price,
 						images: fileLinks,
+						category_id: request.payload.category_id,
 						inStock: request.payload.inStock,
 						seller: request.payload.seller,
 						stars: request.payload.stars,
@@ -219,8 +218,9 @@ const routes = [
 						specs: request.payload.specs,
 						is_verified: request.payload.is_verified
 					};
-					newProductRef
-						.update(newProduct)
+					db.collection("products")
+						.doc(request.params.id)
+						.set(newProduct, { merge: true })
 						.then((res) => {
 							console.log(res);
 							return resolve({ message: "Product edited successfully" });
@@ -250,8 +250,9 @@ const routes = [
 						is_verified: request.payload.is_verified
 					};
 
-					newProductRef
-						.update(newProduct)
+					db.collection("products")
+						.doc(request.params.id)
+						.set(newProduct, { merge: true })
 						.then((res) => {
 							console.log(res);
 							return resolve({ message: "Product edited successfully" });
@@ -290,6 +291,138 @@ const routes = [
 						return resolve({
 							status: "success",
 							message: "Product deleted successfully!"
+						});
+					} catch (err) {
+						reject({ message: err.message });
+					}
+				};
+				return new Promise(pr);
+			}
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/category",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Get categories",
+			notes: "Use get method to get all categories"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.id;
+				try {
+					const categories_snapshot = await db.collection("categories").get();
+					const categories = [];
+
+					categories_snapshot.forEach((doc) => {
+						categories.push({ id: doc.id, ...doc.data() });
+					});
+
+					return resolve({
+						status: "success",
+						message: "Categories fetched successfully",
+						categories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/categories",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Upload category data",
+			notes: "Upload category data"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				var newCategory = {
+					category_name: request.payload.category_name
+				};
+
+				try {
+					await db.collection("categories").add(newCategory);
+					return resolve({ message: "Category added successfully!" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "PUT",
+		path: "/api/categories/{id}",
+
+		config: {
+			tags: ["api", "Categories"],
+			description: "Update category data",
+			notes: "Update category data by id",
+			cors: {
+				origin: ["*"],
+				additionalHeaders: ["cache-control", "x-requested-with"]
+			},
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				}),
+				payload: {
+					category_name: Joi.string().optional()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const newCategory = {
+					category_name: request.payload.category_name
+				};
+				db.collection("categories")
+					.doc(request.params.id)
+					.set(newCategory, { merge: true })
+					.then((res) => {
+						console.log(res);
+						return resolve({ message: "Category edited successfully" });
+					})
+					.catch((err) => {
+						console.log(err.message);
+						return reject(err);
+					});
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path: "/api/categories/{id}",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Delete category's data by id",
+			notes: "Delete category",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			},
+			handler: async (request, reply) => {
+				let pr = async (resolve, reject) => {
+					const id = request.params.id;
+
+					try {
+						await db
+							.collection("categories")
+							.doc(id)
+							.delete();
+
+						return resolve({
+							status: "success",
+							message: "Category deleted successfully!"
 						});
 					} catch (err) {
 						reject({ message: err.message });
@@ -390,7 +523,7 @@ const routes = [
 						.doc(request.params.user_id)
 						.collection("items")
 						.doc(request.payload.product_id)
-						.set({ quantity: request.payload.quantity });
+						.set({ quantity: request.payload.quantity }, { merge: true });
 					return resolve({ message: "Product added to cart successfully" });
 				} catch (err) {
 					return reject(err);
