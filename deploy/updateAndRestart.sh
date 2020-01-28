@@ -7,18 +7,18 @@ set -e
 rm -rf /home/ubuntu/bb-backend/
 
 # clone the repo again
-git clone https://gitlab.com/abhinavdhasmana/bb-backend.git
+git clone git@gitlab.com:decoderslabs/bb-backend.git
 
 # # stop the previous pm2
-# pm2 kill
-# npm remove pm2 -g
+pm2 kill
+npm remove pm2 -g
 
 
-# #pm2 needs to be installed globally as we would be deleting the repo folder.
-# # this needs to be done only once as a setup script.
-# npm install pm2 -g
-# # starting pm2 daemon
-# pm2 status
+#pm2 needs to be installed globally as we would be deleting the repo folder.
+# this needs to be done only once as a setup script.
+npm install pm2 -g
+# starting pm2 daemon
+pm2 status
 
 cd /home/ubuntu/bb-backend
 
@@ -27,4 +27,4 @@ echo "Running npm install"
 npm install
 
 #Restart the node server
-npm start
+npm run prod
