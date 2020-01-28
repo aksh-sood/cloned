@@ -7,7 +7,7 @@ set -e
 rm -rf /home/ubuntu/bb-backend/
 
 # clone the repo again
-git clone https://gitlab.com/abhinavdhasmana/bb-backend.git
+git clone https://gitlab.com/decoderslabs/bb-backend.git
 
 # stop the previous pm2
 pm2 kill
