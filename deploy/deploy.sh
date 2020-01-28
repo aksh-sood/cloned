@@ -8,9 +8,12 @@ eval $(ssh-agent -s)
 echo "$PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
 
 # ** Alternative approach
-echo -e "$PRIVATE_KEY" > /root/.ssh/id_rsa
-chmod 600 /root/.ssh/id_rsa
+# echo -e "$PRIVATE_KEY" > /root/.ssh/id_rsa
+# chmod 600 /root/.ssh/id_rsa
+# ** End of alternative approach
 
+# disable the host key checking.
+./deploy/disableHostKeyChecking.sh
 
 # we have already setup the DEPLOYER_SERVER in our gitlab settings which is a
 # comma seperated values of ip addresses.
