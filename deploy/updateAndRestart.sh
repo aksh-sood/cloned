@@ -7,9 +7,9 @@ set -e
 rm -rf /home/ubuntu/bb-backend/
 
 # clone the repo again
-git clone git@gitlab.com:decoderslabs/bb-backend.git
+git clone https://gitlab.com/abhinavdhasmana/bb-backend.git
 
-# # stop the previous pm2
+# stop the previous pm2
 pm2 kill
 npm remove pm2 -g
 
