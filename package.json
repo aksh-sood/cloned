@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "nodemon --exec babel-node bootstrap.js",
+		"dev": "nodemon --exec babel-node bootstrap.js",
 		"prod": "sudo pm2 start --interpreter babel-node bootstrap.js -i 0",
 		"stop": "pm2 stop all",
 		"restart": "pm2 restart src/server.js",
