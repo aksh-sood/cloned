@@ -4,7 +4,7 @@
 set -e
 
 # Delete the old repo
-rm -rf /home/ubuntu/bb-backend/
+sudo rm -rf /home/ubuntu/bb-backend/
 
 # clone the repo again
 git config --global user.name "raaj2045"
