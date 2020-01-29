@@ -30,4 +30,4 @@ sudo npm install
 
 #Restart the node server
 sudo pkill -f node
-sudo npm run dev > ../nodeserver.log 2>&1 &
+sudo npm run dev > &1 &
