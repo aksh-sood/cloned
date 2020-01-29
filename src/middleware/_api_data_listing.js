@@ -460,16 +460,29 @@ const routes = [
 					itemsSnapshot.forEach((doc) => {
 						items.push({ id: doc.id, ...doc.data() });
 					});
-					var cart = { id: cartDoc.id, items: items };
 
+					var cart = { id: cartDoc.id, items: [] };
+					console.log(items);
+					for (var item in items) {
+						const id = items[item].id;
+						const product_doc = await db
+							.collection("products")
+							.doc(id)
+							.get();
+						const product_info = { id: product_doc.id, ...product_doc.data() };
+						cart.items.push(product_info);
+					}
+					console.log(cart);
 					// result
+
 					return resolve({
 						status: "success",
 						message: "Cart data fetched successfully",
 						cart
 					});
 				} catch (err) {
-					reject({ message: err.message });
+					console.log(err);
+					return reject({ message: err });
 				}
 			};
 			return new Promise(pr);
@@ -574,6 +587,125 @@ const routes = [
 				};
 				return new Promise(pr);
 			}
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/save-address/{user_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Get saved user addresses",
+			notes: "Get saved user addresses",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					let addresses = [];
+					const addressSnapshot = await db
+						.collection("saved-addresses")
+						.doc(request.params.user_id)
+						.collection("addresses")
+						.get();
+					addressSnapshot.forEach((doc) => {
+						addresses.push({ id: doc.id, ...doc.data() });
+					});
+					return resolve({
+						message: "User address saved successfully",
+						addresses
+					});
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/save-address/{user_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Save user address",
+			notes: "Save user address",
+			validate: {
+				payload: {
+					first_name: Joi.string(),
+					last_name: Joi.string(),
+					company: Joi.string(),
+					city: Joi.string(),
+					country: Joi.string(),
+					full_address: Joi.string(),
+					phone: Joi.string()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("saved-addresses")
+						.doc(request.params.user_id)
+						.collection("addresses")
+						.add({
+							first_name: request.payload.first_name,
+							last_name: request.payload.last_name,
+							company: request.payload.company,
+							city: request.payload.city,
+							country: request.payload.country,
+							full_address: request.payload.full_address,
+							phone: request.payload.phone
+						});
+					return resolve({ message: "User address saved successfully" });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	,
+	{
+		method: "POST",
+		path: "/api/checkout/{user_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Checkout from cart",
+			notes: "Checkout",
+			validate: {
+				payload: {
+					payment_id: Joi.string(),
+					total_amount: Joi.string()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("user-orders")
+						.doc(request.params.user_id)
+						.collection("orders")
+						.add({
+							payment_id: request.payload.first_name,
+							total_amount: request.payload.last_name
+						});
+					return resolve({ message: "Order added successfully" });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
 		}
 	}
 ];

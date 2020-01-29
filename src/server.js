@@ -60,8 +60,11 @@ const init = async () => {
 			}
 		}
 	});
-
-	server.route(routes);
+	try {
+		server.route(routes);
+	} catch (err) {
+		console.log(err);
+	}
 
 	await server.start();
 	console.log("Server running on %s", server.info.uri);
