@@ -30,4 +30,3 @@ sudo npm install
 
 #Restart the node server
 sudo pkill -f node
-sudo npm run dev > &1 &

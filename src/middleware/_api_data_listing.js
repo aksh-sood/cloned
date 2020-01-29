@@ -449,7 +449,18 @@ const routes = [
 						.collection("cart")
 						.doc(id)
 						.get();
-					var cart = { id: cartDoc.id, ...cartDoc.data() };
+
+					let items = [];
+
+					var itemsSnapshot = await db
+						.collection("cart")
+						.doc(id)
+						.collection("items")
+						.get();
+					itemsSnapshot.forEach((doc) => {
+						items.push({ id: doc.id, ...doc.data() });
+					});
+					var cart = { id: cartDoc.id, items: items };
 
 					// result
 					return resolve({
