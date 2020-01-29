@@ -9,7 +9,7 @@ rm -rf /home/ubuntu/bb-backend/
 # clone the repo again
 git config --global user.name "raaj2045"
 git config --global user.email "raaj2045@gmail.com"
-git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/decoderslabs/bb-backend.git
+git clone https://gitlab+deploy-token-134290:miVzKRWirUzwo6kg8_od@gitlab.com/decoderslabs/bb-backend.git
 
 # stop the previous pm2
 pm2 kill
