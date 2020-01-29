@@ -675,7 +675,6 @@ const routes = [
 			return new Promise(pr);
 		}
 	},
-
 	{
 		method: "POST",
 		path: "/api/checkout/{user_id}",
@@ -689,6 +688,64 @@ const routes = [
 					total_amount: Joi.string(),
 					address_id: Joi.string()
 				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const address_doc = await db
+						.collection("saved-addresses")
+						.doc(request.params.user_id)
+						.collection("addresses")
+						.doc(request.payload.address_id)
+						.get();
+					const address = { id: address_doc.id, ...address_doc.data() };
+					const itemSnapshot = await db
+						.collection("cart")
+						.doc(request.params.user_id)
+						.collection("items")
+						.get();
+					let item_ids = [];
+					itemSnapshot.forEach((doc) => {
+						item_ids.push(doc.id);
+					});
+
+					for (var item in item_ids) {
+						await db
+							.collection("cart")
+							.doc(request.params.user_id)
+							.collection("items")
+							.doc(item_ids[item])
+							.delete();
+					}
+					await db
+						.collection("user-orders")
+						.doc(request.params.user_id)
+						.collection("orders")
+						.add({
+							payment_id: request.payload.first_name,
+							total_amount: request.payload.last_name,
+							address
+						});
+					return resolve({ message: "Order added successfully" });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/orders/{user_id}",
+		config: {
+			tags: ["api", "Orders"],
+			description: "Checkout from cart",
+			notes: "Checkout",
+			validate: {
 				params: Joi.object({
 					user_id: Joi.string()
 				})
