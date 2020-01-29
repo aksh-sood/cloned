@@ -469,7 +469,11 @@ const routes = [
 							.collection("products")
 							.doc(id)
 							.get();
-						const product_info = { id: product_doc.id, ...product_doc.data() };
+						const product_info = {
+							id: product_doc.id,
+							quantity: items[item].quantity,
+							...product_doc.data()
+						};
 						cart.items.push(product_info);
 					}
 					console.log(cart);
