@@ -686,7 +686,8 @@ const routes = [
 			validate: {
 				payload: {
 					payment_id: Joi.string(),
-					total_amount: Joi.string()
+					total_amount: Joi.string(),
+					address_id: Joi.string()
 				},
 				params: Joi.object({
 					user_id: Joi.string()
@@ -696,13 +697,21 @@ const routes = [
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
+					const address_doc = await db
+						.collection("saved-addresses")
+						.doc(request.params.user_id)
+						.collection("addresses")
+						.doc(request.payload.address_id)
+						.get();
+					const address = { id: address_doc.id, ...address_doc.data() };
 					await db
 						.collection("user-orders")
 						.doc(request.params.user_id)
 						.collection("orders")
 						.add({
 							payment_id: request.payload.first_name,
-							total_amount: request.payload.last_name
+							total_amount: request.payload.last_name,
+							address
 						});
 					return resolve({ message: "Order added successfully" });
 				} catch (err) {
