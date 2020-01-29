@@ -535,7 +535,7 @@ const routes = [
 						.collection("items")
 						.doc(request.payload.product_id)
 						.set({ quantity: request.payload.quantity }, { merge: true });
-					return resolve({ message: "Product added to cart successfully" });
+					return resolve({ message: "Product updated in cart successfully" });
 				} catch (err) {
 					return reject(err);
 				}
@@ -561,7 +561,7 @@ const routes = [
 					try {
 						await db
 							.collection("cart")
-							.doc(request.params.id)
+							.doc(request.params.user_id)
 							.collection("items")
 							.doc(request.params.product_id)
 							.delete();
