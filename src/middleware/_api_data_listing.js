@@ -434,7 +434,12 @@ const routes = [
 		config: {
 			tags: ["api", "Cart"],
 			description: "Get cart data by user id",
-			notes: "Use get method to get cart data by user id"
+			notes: "Use get method to get cart data by user id",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
@@ -443,7 +448,6 @@ const routes = [
 					var cartDoc = await db
 						.collection("cart")
 						.doc(id)
-						.collection("items")
 						.get();
 					var cart = { id: cartDoc.id, ...cartDoc.data() };
 
