@@ -7,8 +7,8 @@ set -e
 rm -rf /home/ubuntu/bb-backend/
 
 # clone the repo again
-git --global config user.name "raaj2045"
-git --global config user.email "raaj2045@gmail.com"
+git config --global user.name "raaj2045"
+git config --global user.email "raaj2045@gmail.com"
 git clone https://raaj2045:Ronaldo@204507@gitlab.com/decoderslabs/bb-backend.git
 
 # stop the previous pm2
