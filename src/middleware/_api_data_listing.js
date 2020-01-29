@@ -671,7 +671,7 @@ const routes = [
 			return new Promise(pr);
 		}
 	},
-	,
+
 	{
 		method: "POST",
 		path: "/api/checkout/{user_id}",
