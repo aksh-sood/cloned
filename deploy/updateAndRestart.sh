@@ -29,5 +29,5 @@ echo "Running npm install"
 sudo npm install
 
 #Restart the node server
-sudo pfkill -f node
+sudo pkill -f node
 sudo npm run start
