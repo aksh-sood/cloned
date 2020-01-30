@@ -141,7 +141,8 @@ const routes = [
 					values: request.payload.values,
 					highlights: request.payload.highlights,
 					specs: request.payload.specs,
-					is_verified: request.payload.is_verified
+					is_verified: request.payload.is_verified,
+					sizes: request.payload.sizes
 				};
 
 				try {
@@ -220,7 +221,8 @@ const routes = [
 						values: request.payload.values,
 						highlights: request.payload.highlights,
 						specs: request.payload.specs,
-						is_verified: request.payload.is_verified
+						is_verified: request.payload.is_verified,
+						sizes: request.payload.sizes
 					};
 					db.collection("products")
 						.doc(request.params.id)
@@ -251,7 +253,8 @@ const routes = [
 						values: request.payload.values,
 						highlights: request.payload.highlights,
 						specs: request.payload.specs,
-						is_verified: request.payload.is_verified
+						is_verified: request.payload.is_verified,
+						sizes: request.payload.sizes
 					};
 
 					db.collection("products")
@@ -462,6 +465,7 @@ const routes = [
 					const subcategories_snapshot = await db
 						.collection("categories")
 						.doc(id)
+						.collection("subcategories")
 						.get();
 					const subcategories = [];
 
@@ -509,7 +513,7 @@ const routes = [
 						.collection("categories")
 						.doc(request.params.id)
 						.collection("subcategories")
-						.add(newCategory);
+						.add(newSubcategory);
 					return resolve({ message: "Subcategory added successfully!" });
 				} catch (err) {
 					console.log(err.message);
