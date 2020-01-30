@@ -57,7 +57,13 @@ const routes = [
 						.collection("products")
 						.doc(id)
 						.get();
-					const product = { id: product_doc.id, ...product_doc.data() };
+					var product = { id: product_doc.id, ...product_doc.data() };
+					const category_doc = await db
+						.collection("categories")
+						.doc(product.category_id)
+						.get();
+
+					product = { ...product, category: category_doc.data() };
 
 					return resolve({
 						status: "success",
