@@ -441,7 +441,7 @@ const routes = [
 			}
 		}
 	},
-	,
+
 	{
 		method: "GET",
 		path: "/api/category/{id}/subcategories",
