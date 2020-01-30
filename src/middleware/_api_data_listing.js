@@ -1,12 +1,6 @@
 let Joi = require("joi");
 import admin from "../firebase/firebaseConfig";
-const AWS = require("aws-sdk");
 
-//configuring the AWS environment
-AWS.config.update({
-	accessKeyId: "AKIAILVU3EZSDE7OZX2A",
-	secretAccessKey: "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"
-});
 var db = admin.firestore();
 
 const routes = [
@@ -98,36 +92,11 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				const files = request.payload.files;
-				let fileLinks = [];
-
-				for (const file of files) {
-					const gcsname = new Date().toISOString() + "-" + file.hapi.filename;
-
-					let s3, params;
-
-					s3 = new AWS.S3();
-
-					const options = { partSize: 10 * 1024 * 1024, queueSize: 1 };
-					var folder = "product-images";
-					params = {
-						Bucket: "brandedbaba-bucket",
-						Body: file,
-						Key: `${folder}/${gcsname}`,
-						ContentType: file.hapi.headers["content-type"],
-						ACL: "public-read"
-					};
-
-					const response = await s3.upload(params, options).promise();
-
-					fileLinks.push(response.Location);
-				}
-
 				var newProduct = {
 					product_name: request.payload.product_name,
 					description: request.payload.description,
 					type: request.payload.type,
-					images: fileLinks,
+					images: request.payload.images,
 					category_id: request.payload.category_id,
 					subcat_id: request.payload.subcat_id,
 					inStock: request.payload.inStock,
@@ -176,99 +145,39 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				let newProduct = {};
-				if (request.payload.files) {
-					const files = request.payload.files;
-					let fileLinks = [];
+				let newProduct = {
+					product_name: request.payload.product_name,
+					description: request.payload.description,
+					images: request.payload.images,
+					type: request.payload.type,
+					category_id: request.payload.category_id,
+					subcat_id: request.payload.subcat_id,
+					inStock: request.payload.inStock,
+					seller: request.payload.seller,
+					stars: request.payload.stars,
+					likes: request.payload.likes,
+					total_reviews: request.payload.total_reviews,
+					mrp: request.payload.mrp,
+					discounted_price: request.payload.discounted_price,
+					discount: request.payload.discount,
+					values: request.payload.values,
+					highlights: request.payload.highlights,
+					specs: request.payload.specs,
+					is_verified: request.payload.is_verified,
+					sizes: request.payload.sizes
+				};
 
-					for (const file of files) {
-						const gcsname = new Date().toISOString() + "-" + file.hapi.filename;
-
-						let s3, params;
-
-						s3 = new AWS.S3();
-
-						const options = { partSize: 10 * 1024 * 1024, queueSize: 1 };
-						var folder = "product-images";
-						params = {
-							Bucket: "brandedbaba-bucket",
-							Body: file,
-							Key: `${folder}/${gcsname}`,
-							ContentType: file.hapi.headers["content-type"],
-							ACL: "public-read"
-						};
-
-						const response = await s3.upload(params, options).promise();
-
-						fileLinks.push(response.Location);
-					}
-
-					newProduct = {
-						product_name: request.payload.product_name,
-						description: request.payload.description,
-						type: request.payload.type,
-						images: fileLinks,
-						category_id: request.payload.category_id,
-						subcat_id: request.payload.subcat_id,
-						inStock: request.payload.inStock,
-						seller: request.payload.seller,
-						stars: request.payload.stars,
-						likes: request.payload.likes,
-						total_reviews: request.payload.total_reviews,
-						mrp: request.payload.mrp,
-						discounted_price: request.payload.discounted_price,
-						discount: request.payload.discount,
-						values: request.payload.values,
-						highlights: request.payload.highlights,
-						specs: request.payload.specs,
-						is_verified: request.payload.is_verified,
-						sizes: request.payload.sizes
-					};
-					db.collection("products")
-						.doc(request.params.id)
-						.set(newProduct, { merge: true })
-						.then((res) => {
-							console.log(res);
-							return resolve({ message: "Product edited successfully" });
-						})
-						.catch((err) => {
-							console.log(err.message);
-							return reject(err);
-						});
-				} else {
-					newProduct = {
-						product_name: request.payload.product_name,
-						description: request.payload.description,
-						type: request.payload.type,
-						category_id: request.payload.category_id,
-						subcat_id: request.payload.subcat_id,
-						inStock: request.payload.inStock,
-						seller: request.payload.seller,
-						stars: request.payload.stars,
-						likes: request.payload.likes,
-						total_reviews: request.payload.total_reviews,
-						mrp: request.payload.mrp,
-						discounted_price: request.payload.discounted_price,
-						discount: request.payload.discount,
-						values: request.payload.values,
-						highlights: request.payload.highlights,
-						specs: request.payload.specs,
-						is_verified: request.payload.is_verified,
-						sizes: request.payload.sizes
-					};
-
-					db.collection("products")
-						.doc(request.params.id)
-						.set(newProduct, { merge: true })
-						.then((res) => {
-							console.log(res);
-							return resolve({ message: "Product edited successfully" });
-						})
-						.catch((err) => {
-							console.log(err.message);
-							return reject(err);
-						});
-				}
+				db.collection("products")
+					.doc(request.params.id)
+					.set(newProduct, { merge: true })
+					.then((res) => {
+						console.log(res);
+						return resolve({ message: "Product edited successfully" });
+					})
+					.catch((err) => {
+						console.log(err.message);
+						return reject(err);
+					});
 			};
 			return new Promise(pr);
 		}
