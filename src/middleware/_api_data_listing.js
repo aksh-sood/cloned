@@ -676,6 +676,39 @@ const routes = [
 		}
 	},
 	{
+		method: "DELETE",
+		path: "/api/delete-address/{user_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Delete user address",
+			notes: "Delete user address",
+			validate: {
+				payload: {
+					address_id: Joi.string()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("saved-addresses")
+						.doc(request.params.user_id)
+						.collection("addresses")
+						.doc(request.payload.address_id)
+						.delete();
+					return resolve({ message: "User address deleted successfully" });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
 		method: "POST",
 		path: "/api/checkout/{user_id}",
 		config: {
