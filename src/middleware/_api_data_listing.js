@@ -20,7 +20,6 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				const id = request.params.id;
 				try {
 					const product_snapshot = await db.collection("products").get();
 					const products = [];
@@ -124,6 +123,7 @@ const routes = [
 					type: request.payload.type,
 					images: fileLinks,
 					category_id: request.payload.category_id,
+					subcat_id: request.payload.subcat_id,
 					inStock: request.payload.inStock,
 					seller: request.payload.seller,
 					stars: request.payload.stars,
@@ -137,7 +137,7 @@ const routes = [
 					specs: request.payload.specs,
 					is_verified: request.payload.is_verified
 				};
-				console.log(newProduct);
+
 				try {
 					await db.collection("products").add(newProduct);
 					return resolve({ message: "Product added successfully!" });
@@ -202,6 +202,7 @@ const routes = [
 						type: request.payload.type,
 						images: fileLinks,
 						category_id: request.payload.category_id,
+						subcat_id: request.payload.subcat_id,
 						inStock: request.payload.inStock,
 						seller: request.payload.seller,
 						stars: request.payload.stars,
@@ -232,6 +233,7 @@ const routes = [
 						description: request.payload.description,
 						type: request.payload.type,
 						category_id: request.payload.category_id,
+						subcat_id: request.payload.subcat_id,
 						inStock: request.payload.inStock,
 						seller: request.payload.seller,
 						stars: request.payload.stars,
@@ -334,7 +336,12 @@ const routes = [
 		config: {
 			tags: ["api", "Categories"],
 			description: "Upload category data",
-			notes: "Upload category data"
+			notes: "Upload category data",
+			validate: {
+				payload: {
+					category_name: Joi.string()
+				}
+			}
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
@@ -419,6 +426,165 @@ const routes = [
 						return resolve({
 							status: "success",
 							message: "Category deleted successfully!"
+						});
+					} catch (err) {
+						reject({ message: err.message });
+					}
+				};
+				return new Promise(pr);
+			}
+		}
+	},
+	,
+	{
+		method: "GET",
+		path: "/api/category/{id}/subcategories",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Get subcategories",
+			notes: "Use get method to get all subcategories",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.id;
+				try {
+					const subcategories_snapshot = await db
+						.collection("categories")
+						.doc(id)
+						.get();
+					const subcategories = [];
+
+					subcategories_snapshot.forEach((doc) => {
+						subcategories.push({ id: doc.id, ...doc.data() });
+					});
+
+					return resolve({
+						status: "success",
+						message: "Subcategories fetched successfully",
+						subcategories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/categories/{id}/subcategories",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Upload subcategory data",
+			notes: "Upload subcategory data",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				}),
+				payload: {
+					subcategory_name: Joi.string().optional()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const newSubcategory = {
+					subcategory_name: request.payload.subcategory_name
+				};
+
+				try {
+					await db
+						.collection("categories")
+						.doc(request.params.id)
+						.collection("subcategories")
+						.add(newCategory);
+					return resolve({ message: "Subcategory added successfully!" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "PUT",
+		path: "/api/categories/{id}/subcategories/{subcat_id}",
+
+		config: {
+			tags: ["api", "Categories"],
+			description: "Update subcategory data",
+			notes: "Update subcategory data by id",
+			cors: {
+				origin: ["*"],
+				additionalHeaders: ["cache-control", "x-requested-with"]
+			},
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string()
+				}),
+				payload: {
+					subcategory_name: Joi.string().optional()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const newSubcategory = {
+					subcategory_name: request.payload.subcategory_name
+				};
+				db.collection("categories")
+					.doc(request.params.id)
+					.collection("subcategories")
+					.doc(request.params.subcat_id)
+					.set(newSubcategory, { merge: true })
+					.then((res) => {
+						console.log(res);
+						return resolve({ message: "Subcategory edited successfully" });
+					})
+					.catch((err) => {
+						console.log(err.message);
+						return reject(err);
+					});
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path: "/api/categories/{id}/subcategories/{subcat_id}",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Delete category's data by id",
+			notes: "Delete category",
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string()
+				})
+			},
+			handler: async (request, reply) => {
+				let pr = async (resolve, reject) => {
+					const id = request.params.id;
+
+					try {
+						await db
+							.collection("categories")
+							.doc(id)
+							.collection("subcategories")
+							.doc(request.params.subcat_id)
+							.delete();
+
+						return resolve({
+							status: "success",
+							message: "Sub category deleted successfully!"
 						});
 					} catch (err) {
 						reject({ message: err.message });
