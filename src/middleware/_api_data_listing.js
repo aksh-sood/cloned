@@ -34,7 +34,7 @@ const routes = [
 				try {
 					const { query, filters, sorting_query } = request.payload;
 					const product_snapshot = await db.collection("products").get();
-					const products = [];
+					var products = [];
 
 					product_snapshot.forEach((doc) => {
 						products.push({ id: doc.id, ...doc.data() });
@@ -75,113 +75,114 @@ const routes = [
 							};
 						}
 						products[index] = prod;
-						if (sorting_query === "alphabetical") {
-							products = _.orderBy(products, ["product_name"], ["asc"]);
-						} else if (sorting_query === "price_low") {
-							products = _.orderBy(products, ["mrp"], ["asc"]);
-						} else if (sorting_query === "price_high") {
-							products = _.orderBy(products, ["mrp"], ["desc"]);
-						} else if (sorting_query === "newest") {
-						}
+					}
 
-						if (query !== "") {
-							if (filters) {
-								if (filters.category_id) {
+					if (sorting_query === "alphabetical") {
+						products = _.orderBy(products, ["product_name"], ["asc"]);
+					} else if (sorting_query === "price_low") {
+						products = _.orderBy(products, ["mrp"], ["asc"]);
+					} else if (sorting_query === "price_high") {
+						products = _.orderBy(products, ["mrp"], ["desc"]);
+					} else if (sorting_query === "newest") {
+					}
+					if (query === "") {
+						console.log("No query string");
+						if (filters) {
+							if (filters.category_id) {
+								products = products.filter((product) => {
+									return product.category_id === filters.category_id;
+								});
+								if (filters.subcategory_id) {
 									products = products.filter((product) => {
-										return product.category_id === filters.category_id;
+										return product.subcat_id === filters.subcategory_id;
 									});
-									if (filters.subcategory_id) {
+									if (filters.sub_subcategory_id) {
 										products = products.filter((product) => {
-											return product.subcat_id === filters.subcategory_id;
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
 										});
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
-									} else {
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
 									}
 								} else {
-									if (filters.subcategory_id) {
+									if (filters.sub_subcategory_id) {
 										products = products.filter((product) => {
-											return product.subcat_id === filters.subcategory_id;
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
 										});
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
-									} else {
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
+									}
+								}
+							} else {
+								if (filters.subcategory_id) {
+									products = products.filter((product) => {
+										return product.subcat_id === filters.subcategory_id;
+									});
+									if (filters.sub_subcategory_id) {
+										products = products.filter((product) => {
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
+										});
+									}
+								} else {
+									if (filters.sub_subcategory_id) {
+										products = products.filter((product) => {
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
+										});
 									}
 								}
 							}
-						} else {
-							products = products.filter((product) => {
-								return product.product_name.includes(query);
-							});
-							if (filters) {
-								if (filters.category_id) {
+						}
+					} else {
+						products = products.filter((product) => {
+							return product.product_name.includes(query);
+						});
+						if (filters) {
+							if (filters.category_id) {
+								products = products.filter((product) => {
+									return product.category_id === filters.category_id;
+								});
+								if (filters.subcategory_id) {
 									products = products.filter((product) => {
-										return product.category_id === filters.category_id;
+										return product.subcat_id === filters.subcategory_id;
 									});
-									if (filters.subcategory_id) {
+									if (filters.sub_subcategory_id) {
 										products = products.filter((product) => {
-											return product.subcat_id === filters.subcategory_id;
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
 										});
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
-									} else {
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
 									}
 								} else {
-									if (filters.subcategory_id) {
+									if (filters.sub_subcategory_id) {
 										products = products.filter((product) => {
-											return product.subcat_id === filters.subcategory_id;
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
 										});
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
-									} else {
-										if (filters.sub_subcategory_id) {
-											products = products.filter((product) => {
-												return (
-													product.sub_subcat_id === filters.sub_subcategory_id
-												);
-											});
-										}
+									}
+								}
+							} else {
+								if (filters.subcategory_id) {
+									products = products.filter((product) => {
+										return product.subcat_id === filters.subcategory_id;
+									});
+									if (filters.sub_subcategory_id) {
+										products = products.filter((product) => {
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
+										});
+									}
+								} else {
+									if (filters.sub_subcategory_id) {
+										products = products.filter((product) => {
+											return (
+												product.sub_subcat_id === filters.sub_subcategory_id
+											);
+										});
 									}
 								}
 							}
