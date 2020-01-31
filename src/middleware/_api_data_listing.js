@@ -1,6 +1,11 @@
 let Joi = require("joi");
 import admin from "../firebase/firebaseConfig";
-
+import AWS from "aws-sdk";
+//configuring the AWS environment
+AWS.config.update({
+	accessKeyId: "AKIAILVU3EZSDE7OZX2A",
+	secretAccessKey: "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"
+});
 var db = admin.firestore();
 
 const routes = [
@@ -74,7 +79,7 @@ const routes = [
 	},
 	{
 		method: "POST",
-		path: "/api/products",
+		path: "/api/save-product-image",
 		config: {
 			plugins: {
 				"hapi-swagger": {
@@ -82,8 +87,8 @@ const routes = [
 				}
 			},
 			tags: ["api", "Products"],
-			description: "Upload product data",
-			notes: "Upload product data",
+			description: "Upload product image",
+			notes: "Upload product image",
 			payload: {
 				output: "stream",
 				parse: true,
@@ -92,6 +97,49 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
+				try {
+					const file = request.payload.file;
+					const gcsname = new Date().toISOString() + "-" + file.hapi.filename;
+
+					let s3, params;
+
+					s3 = new AWS.S3();
+
+					const options = { partSize: 10 * 1024 * 1024, queueSize: 1 };
+					var folder = "product-images";
+					params = {
+						Bucket: "brandedbaba-bucket",
+						Body: file,
+						Key: `${folder}/${gcsname}`,
+						ContentType: file.hapi.headers["content-type"],
+						ACL: "public-read"
+					};
+
+					const response = await s3.upload(params, options).promise();
+
+					return resolve({
+						message: "Image uploaded to AWS",
+						image_url: response.Location
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/products",
+		config: {
+			tags: ["api", "Products"],
+			description: "Upload product data",
+			notes: "Upload product data"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				console.log(request.payload);
 				var newProduct = {
 					product_name: request.payload.product_name,
 					description: request.payload.description,
@@ -171,7 +219,6 @@ const routes = [
 					.doc(request.params.id)
 					.set(newProduct, { merge: true })
 					.then((res) => {
-						console.log(res);
 						return resolve({ message: "Product edited successfully" });
 					})
 					.catch((err) => {
