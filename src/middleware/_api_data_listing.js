@@ -938,6 +938,417 @@ const routes = [
 			};
 			return new Promise(pr);
 		}
+	},
+
+	{
+		method: "GET",
+		path: "/api/offer-categories",
+		config: {
+			tags: ["api", "Offer Categories"],
+			description: "Get all offer-categories",
+			notes: "Use get method to get all offer-categories"
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const offerCategoriesSnapshot = await db
+						.collection("offer-categories")
+						.get();
+					const offerCategories = [];
+					offerCategoriesSnapshot.forEach((doc) => {
+						offerCategories.push({ id: doc.id, ...doc.data() });
+					});
+
+					return resolve({
+						status: "success",
+						message: "Offer Categories fetched successfully",
+						data: offerCategories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/offer-categories",
+		config: {
+			tags: ["api", "Offer Categories"],
+			description: "Add a new offer category",
+			notes:
+				"Post the required offer category details to add a new offer category",
+			validate: {
+				payload: {
+					category_type: Joi.string()
+				}
+			}
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				var newOfferCategory = {
+					category_type: request.payload.category_type
+				};
+
+				try {
+					await db.collection("offer-categories").add(newOfferCategory);
+					return resolve({ message: "Offer category added successfully!" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "PUT",
+		path: "/api/offer-category/{id}",
+		config: {
+			tags: ["api", "Offer Categories"],
+			description: "Update a offer category data by it's ID",
+			notes: "Update offer category data using offer category ID",
+			validate: {
+				payload: {
+					category_type: Joi.string().optional()
+				},
+				params: Joi.object({
+					id: Joi.string()
+				})
+			},
+			cors: {
+				origin: ["*"],
+				additionalHeaders: ["cache-control", "x-requested-with"]
+			}
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				const updatedOfferCategory = {
+					category_type: request.payload.category_type
+				};
+
+				const offerCategoryId = request.params.id;
+
+				try {
+					await db
+						.collection("offer-categories")
+						.doc(offerCategoryId)
+						.set(updatedOfferCategory, {
+							merge: true
+						});
+
+					return resolve({ message: "Offer category edited successfully" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path: "/api/offer-category/{id}",
+		config: {
+			tags: ["api", "Offer Categories"],
+			description: "Delete offerCategory data by ID",
+			notes: "Delete offerCategory data using offerCategory ID",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			},
+			handler: async (request, h) => {
+				let pr = async (resolve, reject) => {
+					const offerCategoryId = request.params.id;
+
+					try {
+						await db
+							.collection("offer-categories")
+							.doc(offerCategoryId)
+							.delete();
+						return resolve({
+							status: "success",
+							message: "Offer category deleted successfully!"
+						});
+					} catch (err) {
+						console.log(err.message);
+						return reject(err);
+					}
+				};
+				return new Promise(pr);
+			}
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/offers",
+		config: {
+			tags: ["api", "offers"],
+			description: "Get all offers",
+			notes: "Use get method to get all offers"
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const offersSnapshot = await db.collection("offers").get();
+					const offers = [];
+					offersSnapshot.forEach((doc) => {
+						offers.push({ id: doc.id, ...doc.data() });
+					});
+
+					return resolve({
+						status: "success",
+						message: "Offers fetched successfully",
+						data: offers
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/offers/{id}",
+		config: {
+			tags: ["api", "offers"],
+			description: "Get offer by id",
+			notes: "Use get method to get a particular offer by id"
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const id = request.params.id;
+					const offersDoc = await db
+						.collection("offers")
+						.doc(id)
+						.get();
+					const offer = { id: offersDoc.id, ...offersDoc.data() };
+
+					return resolve({
+						status: "success",
+						message: "Offer fetched successfully",
+						data: offer
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/offers",
+		config: {
+			tags: ["api", "offers"],
+			description: "Add a new offer",
+			notes: "Post the required offer details to add a new offer",
+			validate: {
+				payload: {
+					offer_description: Joi.string(),
+					offer_price: Joi.number(),
+					offer_code: Joi.string(),
+					offer_category_id: Joi.string(),
+					original_price: Joi.number(),
+					saved_amount: Joi.number(),
+					redeemed_count: Joi.number(),
+					max_redeems: Joi.string(),
+					valid_from: Joi.string(),
+					valid_till: Joi.string(),
+					validity: Joi.string()
+				}
+			}
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				var newOffer = {
+					offer_description: request.payload.offer_description,
+					offer_price: request.payload.offer_price,
+					offer_code: request.payload.offer_code,
+					offer_category_id: request.payload.offer_category_id,
+					original_price: request.payload.original_price,
+					saved_amount: request.payload.saved_amount,
+					redeemed_count: request.payload.redeemed_count,
+					max_redeems: request.payload.max_redeems,
+					valid_from: request.payload.valid_from,
+					valid_till: request.payload.valid_till,
+					validity: request.payload.validity
+				};
+
+				try {
+					await db.collection("offers").add(newOffer);
+					return resolve({ message: "Offer added successfully!" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+
+	{
+		method: "PUT",
+		path: "/api/offers/{id}",
+		config: {
+			tags: ["api", "offers"],
+			description: "Update a offer data by it's ID",
+			notes: "Update offer data using offer ID",
+			validate: {
+				payload: {
+					offer_description: Joi.string().optional(),
+					offer_price: Joi.number().optional(),
+					offer_code: Joi.string().optional(),
+					offer_category_id: Joi.string().optional(),
+					original_price: Joi.number().optional(),
+					saved_amount: Joi.number().optional(),
+					redeemed_count: Joi.number().optional(),
+					max_redeems: Joi.string().optional(),
+					valid_from: Joi.string().optional(),
+					valid_till: Joi.string().optional(),
+					validity: Joi.string().optional()
+				},
+
+				params: Joi.object({
+					id: Joi.string()
+				})
+			},
+			cors: {
+				origin: ["*"],
+				additionalHeaders: ["cache-control", "x-requested-with"]
+			}
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				const updatedOffer = {
+					offer_description: request.payload.offer_description,
+					offer_price: request.payload.offer_price,
+					offer_code: request.payload.offer_code,
+					offer_category_id: request.payload.offer_category_id,
+					original_price: request.payload.original_price,
+					saved_amount: request.payload.saved_amount,
+					redeemed_count: request.payload.redeemed_count,
+					max_redeems: request.payload.max_redeems,
+					valid_from: request.payload.valid_from,
+					valid_till: request.payload.valid_till,
+					validity: request.payload.validity
+				};
+
+				const offerId = request.params.id;
+
+				try {
+					await db
+						.collection("offers")
+						.doc(offerId)
+						.set(updatedOffer, {
+							merge: true
+						});
+
+					return resolve({ message: "Offer edited successfully" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path: "/api/offers/{id}",
+		config: {
+			tags: ["api", "offers"],
+			description: "Delete offer data by ID",
+			notes: "Delete offer data using offer ID",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			},
+			handler: async (request, h) => {
+				let pr = async (resolve, reject) => {
+					const offerId = request.params.id;
+
+					try {
+						await db
+							.collection("offers")
+							.doc(offerId)
+							.delete();
+						return resolve({
+							status: "success",
+							message: "Offer deleted successfully!"
+						});
+					} catch (err) {
+						console.log(err.message);
+						return reject(err);
+					}
+				};
+				return new Promise(pr);
+			}
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/offers/redeem-coupon-code",
+		config: {
+			tags: ["api", "offers"],
+			description: "Redeem coupon code",
+			notes: "Post the required offer details to get a new coupon",
+			validate: {
+				payload: {
+					offer_id: Joi.string(),
+					user_id: Joi.string(),
+					date: Joi.number()
+				}
+			}
+		},
+		handler: async (request, h) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const offersDoc = await db
+						.collection("offers")
+						.doc(request.payload.offer_id)
+						.get();
+					const offer = { id: offersDoc.id, ...offersDoc.data() };
+					console.log(offer);
+					var redeemed_count = offer.redeemed_count;
+					redeemed_count++;
+					if (redeemed_count > offer.max_redeems) {
+						return reject({
+							message: "Max redeems for the offer have occured"
+						});
+					} else {
+						await db
+							.collection("redeemed-offers")
+							.doc(request.payload.offer_id)
+							.add({
+								offer_id: request.payload.offer_id,
+								user_id: request.payload.user_id,
+								date: request.payload.date
+							});
+						await db
+							.collection("offers")
+							.doc(request.payload.offer_id)
+							.set({ redeemed_count }, { merge: true });
+						return resolve({
+							message: "Coupon redeemed successfully!",
+							newCoupon
+						});
+					}
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
 	}
 ];
 
