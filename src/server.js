@@ -3,13 +3,11 @@ import Hapi from "hapi";
 
 const Path = require("path");
 import routes from "./middleware/_api_data_listing";
-
 const port = process.env.PORT || 8000;
-console.log(__dirname);
 const Inert = require("inert");
 const Vision = require("vision");
 const HapiSwagger = require("hapi-swagger");
-const cors = require("hapi-modern-cors");
+
 const init = async () => {
 	const server = new Hapi.Server({
 		port: port,
