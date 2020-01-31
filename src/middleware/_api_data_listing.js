@@ -1,6 +1,7 @@
 let Joi = require("joi");
 import admin from "../firebase/firebaseConfig";
 import AWS from "aws-sdk";
+var _ = require("lodash");
 //configuring the AWS environment
 AWS.config.update({
 	accessKeyId: "AKIAILVU3EZSDE7OZX2A",
@@ -9,6 +10,197 @@ AWS.config.update({
 var db = admin.firestore();
 
 const routes = [
+	{
+		method: "POST",
+		path: "/api/search/products",
+		config: {
+			tags: ["api", "Products"],
+			description: "Get products",
+			notes: "Use get method to get all products",
+			validate: {
+				payload: {
+					query: Joi.string().optional(),
+					filters: Joi.object({
+						category_id: Joi.string().optional(),
+						subcategory_id: Joi.string().optional(),
+						sub_subcategory_id: Joi.string().optional()
+					}).optional(),
+					sorting_query: Joi.string().optional()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const { query, filters, sorting_query } = request.payload;
+					const product_snapshot = await db.collection("products").get();
+					const products = [];
+
+					product_snapshot.forEach((doc) => {
+						products.push({ id: doc.id, ...doc.data() });
+					});
+
+					for (var index in products) {
+						var prod = products[index];
+						const category_doc = await db
+							.collection("categories")
+							.doc(prod.category_id)
+							.get();
+						prod = { ...prod, category: category_doc.data() };
+
+						if (prod.subcat_id !== "") {
+							const subcategory_doc = await db
+								.collection("categories")
+								.doc(prod.category_id)
+								.collection("subcategories")
+								.doc(prod.subcat_id)
+								.get();
+
+							prod = { ...prod, subcategory: subcategory_doc.data() };
+						}
+
+						if (prod.sub_subcat_id !== "") {
+							const sub_subcategory_doc = await db
+								.collection("categories")
+								.doc(prod.category_id)
+								.collection("subcategories")
+								.doc(prod.subcat_id)
+								.collection("sub-subcategories")
+								.doc(prod.sub_subcat_id)
+								.get();
+
+							prod = {
+								...prod,
+								sub_subcategory: sub_subcategory_doc.data()
+							};
+						}
+						products[index] = prod;
+						if (sorting_query === "alphabetical") {
+							products = _.orderBy(products, ["product_name"], ["asc"]);
+						} else if (sorting_query === "price_low") {
+							products = _.orderBy(products, ["mrp"], ["asc"]);
+						} else if (sorting_query === "price_high") {
+							products = _.orderBy(products, ["mrp"], ["desc"]);
+						} else if (sorting_query === "newest") {
+						}
+
+						if (query !== "") {
+							if (filters) {
+								if (filters.category_id) {
+									products = products.filter((product) => {
+										return product.category_id === filters.category_id;
+									});
+									if (filters.subcategory_id) {
+										products = products.filter((product) => {
+											return product.subcat_id === filters.subcategory_id;
+										});
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									} else {
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									}
+								} else {
+									if (filters.subcategory_id) {
+										products = products.filter((product) => {
+											return product.subcat_id === filters.subcategory_id;
+										});
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									} else {
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									}
+								}
+							}
+						} else {
+							products = products.filter((product) => {
+								return product.product_name.includes(query);
+							});
+							if (filters) {
+								if (filters.category_id) {
+									products = products.filter((product) => {
+										return product.category_id === filters.category_id;
+									});
+									if (filters.subcategory_id) {
+										products = products.filter((product) => {
+											return product.subcat_id === filters.subcategory_id;
+										});
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									} else {
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									}
+								} else {
+									if (filters.subcategory_id) {
+										products = products.filter((product) => {
+											return product.subcat_id === filters.subcategory_id;
+										});
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									} else {
+										if (filters.sub_subcategory_id) {
+											products = products.filter((product) => {
+												return (
+													product.sub_subcat_id === filters.sub_subcategory_id
+												);
+											});
+										}
+									}
+								}
+							}
+						}
+					}
+
+					return resolve({
+						status: "success",
+						message: "Products fetched successfully",
+						products
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
 	{
 		method: "GET",
 		path: "/api/products",
@@ -26,6 +218,43 @@ const routes = [
 					product_snapshot.forEach((doc) => {
 						products.push({ id: doc.id, ...doc.data() });
 					});
+
+					for (var index in products) {
+						var prod = products[index];
+						const category_doc = await db
+							.collection("categories")
+							.doc(prod.category_id)
+							.get();
+						prod = { ...prod, category: category_doc.data() };
+
+						if (prod.subcat_id !== "") {
+							const subcategory_doc = await db
+								.collection("categories")
+								.doc(prod.category_id)
+								.collection("subcategories")
+								.doc(prod.subcat_id)
+								.get();
+
+							prod = { ...prod, subcategory: subcategory_doc.data() };
+						}
+
+						if (prod.sub_subcat_id !== "") {
+							const sub_subcategory_doc = await db
+								.collection("categories")
+								.doc(prod.category_id)
+								.collection("subcategories")
+								.doc(prod.subcat_id)
+								.collection("sub-subcategories")
+								.doc(prod.sub_subcat_id)
+								.get();
+
+							prod = {
+								...prod,
+								sub_subcategory: sub_subcategory_doc.data()
+							};
+						}
+						products[index] = prod;
+					}
 
 					return resolve({
 						status: "success",
@@ -61,9 +290,34 @@ const routes = [
 						.collection("categories")
 						.doc(product.category_id)
 						.get();
-
 					product = { ...product, category: category_doc.data() };
 
+					if (product.subcat_id !== "") {
+						const subcategory_doc = await db
+							.collection("categories")
+							.doc(product.category_id)
+							.collection("subcategories")
+							.doc(product.subcat_id)
+							.get();
+
+						product = { ...product, subcategory: subcategory_doc.data() };
+					}
+
+					if (product.sub_subcat_id !== "") {
+						const sub_subcategory_doc = await db
+							.collection("categories")
+							.doc(product.category_id)
+							.collection("subcategories")
+							.doc(product.subcat_id)
+							.collection("sub-subcategories")
+							.doc(product.sub_subcat_id)
+							.get();
+
+						product = {
+							...product,
+							sub_subcategory: sub_subcategory_doc.data()
+						};
+					}
 					return resolve({
 						status: "success",
 						message: "Product fetched successfully",
@@ -150,9 +404,9 @@ const routes = [
 					stars: Joi.number(),
 					likes: Joi.number(),
 					total_reviews: Joi.number(),
-					mrp: Joi.string(),
-					discounted_price: Joi.string(),
-					discount: Joi.string(),
+					mrp: Joi.number(),
+					discounted_price: Joi.number(),
+					discount: Joi.number(),
 					highlights: Joi.array().items(Joi.string()),
 					is_verified: Joi.bool(),
 					sizes: Joi.array().items(Joi.string())
@@ -167,8 +421,8 @@ const routes = [
 					featuredImageId: request.payload.featuredImageId,
 					images: request.payload.images,
 					category_id: request.payload.category_id,
-					sub_subcat_id: request.payload.sub_subcat_id.optional(),
-					subcat_id: request.payload.subcat_id.optional(),
+					sub_subcat_id: request.payload.sub_subcat_id,
+					subcat_id: request.payload.subcat_id,
 					inStock: request.payload.inStock,
 					seller: request.payload.seller,
 					stars: request.payload.stars,
@@ -195,7 +449,7 @@ const routes = [
 	},
 	{
 		method: "PUT",
-		path: "/api/products/{id}",
+		path: "/api/products",
 
 		config: {
 			tags: ["api", "Products"],
@@ -206,10 +460,8 @@ const routes = [
 				additionalHeaders: ["cache-control", "x-requested-with"]
 			},
 			validate: {
-				params: Joi.object({
-					id: Joi.string()
-				}),
 				payload: {
+					id: Joi.string().optional(),
 					product_name: Joi.string().optional(),
 					description: Joi.string().optional(),
 					featuredImageId: Joi.string().optional(),
@@ -224,9 +476,9 @@ const routes = [
 					stars: Joi.number().optional(),
 					likes: Joi.number().optional(),
 					total_reviews: Joi.number().optional(),
-					mrp: Joi.string().optional(),
-					discounted_price: Joi.string().optional(),
-					discount: Joi.string().optional(),
+					mrp: Joi.number().optional(),
+					discounted_price: Joi.number().optional(),
+					discount: Joi.number().optional(),
 					highlights: Joi.array()
 						.items(Joi.string())
 						.optional(),
@@ -261,7 +513,7 @@ const routes = [
 				};
 
 				db.collection("products")
-					.doc(request.params.id)
+					.doc(request.payload.id)
 					.set(newProduct, { merge: true })
 					.then((res) => {
 						return resolve({ message: "Product edited successfully" });
