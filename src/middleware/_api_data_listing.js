@@ -33,6 +33,7 @@ const routes = [
 			let pr = async (resolve, reject) => {
 				try {
 					const { query, filters, sorting_query } = request.payload;
+
 					const product_snapshot = await db.collection("products").get();
 					var products = [];
 
@@ -78,14 +79,19 @@ const routes = [
 					}
 
 					if (sorting_query === "alphabetical") {
-						products = _.orderBy(products, ["product_name"], ["asc"]);
+						products = _.orderBy(
+							products,
+							[(product) => product.product_name.toLowerCase()],
+							["asc"]
+						);
 					} else if (sorting_query === "price_low") {
 						products = _.orderBy(products, ["mrp"], ["asc"]);
 					} else if (sorting_query === "price_high") {
 						products = _.orderBy(products, ["mrp"], ["desc"]);
 					} else if (sorting_query === "newest") {
 					}
-					if (query === "") {
+
+					if (query === "" || typeof query === "undefined") {
 						console.log("No query string");
 						if (filters) {
 							if (filters.category_id) {
@@ -134,8 +140,11 @@ const routes = [
 									}
 								}
 							}
+						} else {
+							console.log("Pno filters");
 						}
 					} else {
+						console.log("Query passed");
 						products = products.filter((product) => {
 							return product.product_name.includes(query);
 						});
