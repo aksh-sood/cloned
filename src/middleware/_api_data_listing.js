@@ -135,17 +135,39 @@ const routes = [
 		config: {
 			tags: ["api", "Products"],
 			description: "Upload product data",
-			notes: "Upload product data"
+			notes: "Upload product data",
+			validate: {
+				payload: {
+					product_name: Joi.string(),
+					description: Joi.string(),
+					featuredImageId: Joi.string(),
+					images: Joi.array().items(Joi.string()),
+					category_id: Joi.string(),
+					sub_subcat_id: Joi.string().optional(),
+					subcat_id: Joi.string().optional(),
+					inStock: Joi.bool(),
+					seller: Joi.string(),
+					stars: Joi.number(),
+					likes: Joi.number(),
+					total_reviews: Joi.number(),
+					mrp: Joi.string(),
+					discounted_price: Joi.string(),
+					discount: Joi.string(),
+					highlights: Joi.array().items(Joi.string()),
+					is_verified: Joi.bool(),
+					sizes: Joi.array().items(Joi.string())
+				}
+			}
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				console.log(request.payload);
 				var newProduct = {
 					product_name: request.payload.product_name,
 					description: request.payload.description,
-					type: request.payload.type,
+					featuredImageId: request.payload.featuredImageId,
 					images: request.payload.images,
 					category_id: request.payload.category_id,
+					sub_subcat_id: request.payload.sub_subcat_id,
 					subcat_id: request.payload.subcat_id,
 					inStock: request.payload.inStock,
 					seller: request.payload.seller,
@@ -155,9 +177,7 @@ const routes = [
 					mrp: request.payload.mrp,
 					discounted_price: request.payload.discounted_price,
 					discount: request.payload.discount,
-					values: request.payload.values,
 					highlights: request.payload.highlights,
-					specs: request.payload.specs,
 					is_verified: request.payload.is_verified,
 					sizes: request.payload.sizes
 				};
@@ -188,7 +208,33 @@ const routes = [
 			validate: {
 				params: Joi.object({
 					id: Joi.string()
-				})
+				}),
+				payload: {
+					product_name: Joi.string().optional(),
+					description: Joi.string().optional(),
+					featuredImageId: Joi.string().optional(),
+					images: Joi.array()
+						.items(Joi.string())
+						.optional(),
+					category_id: Joi.string().optional(),
+					sub_subcat_id: Joi.string().optional(),
+					subcat_id: Joi.string().optional(),
+					inStock: Joi.bool().optional(),
+					seller: Joi.string().optional(),
+					stars: Joi.number().optional(),
+					likes: Joi.number().optional(),
+					total_reviews: Joi.number().optional(),
+					mrp: Joi.string().optional(),
+					discounted_price: Joi.string().optional(),
+					discount: Joi.string().optional(),
+					highlights: Joi.array()
+						.items(Joi.string())
+						.optional(),
+					is_verified: Joi.bool().optional(),
+					sizes: Joi.array()
+						.items(Joi.string())
+						.optional()
+				}
 			}
 		},
 		handler: async (request, reply) => {
@@ -196,9 +242,10 @@ const routes = [
 				let newProduct = {
 					product_name: request.payload.product_name,
 					description: request.payload.description,
+					featuredImageId: request.payload.featuredImageId,
 					images: request.payload.images,
-					type: request.payload.type,
 					category_id: request.payload.category_id,
+					sub_subcat_id: request.payload.sub_subcat_id,
 					subcat_id: request.payload.subcat_id,
 					inStock: request.payload.inStock,
 					seller: request.payload.seller,
@@ -208,9 +255,7 @@ const routes = [
 					mrp: request.payload.mrp,
 					discounted_price: request.payload.discounted_price,
 					discount: request.payload.discount,
-					values: request.payload.values,
 					highlights: request.payload.highlights,
-					specs: request.payload.specs,
 					is_verified: request.payload.is_verified,
 					sizes: request.payload.sizes
 				};
