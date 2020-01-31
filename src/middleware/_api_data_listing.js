@@ -217,6 +217,7 @@ const routes = [
 						.items(Joi.string())
 						.optional(),
 					category_id: Joi.string().optional(),
+					sub_subcat_id: Joi.string().optional(),
 					subcat_id: Joi.string().optional(),
 					inStock: Joi.bool().optional(),
 					seller: Joi.string().optional(),
@@ -244,6 +245,7 @@ const routes = [
 					featuredImageId: request.payload.featuredImageId,
 					images: request.payload.images,
 					category_id: request.payload.category_id,
+					sub_subcat_id: request.payload.sub_subcat_id,
 					subcat_id: request.payload.subcat_id,
 					inStock: request.payload.inStock,
 					seller: request.payload.seller,
@@ -334,9 +336,26 @@ const routes = [
 						subcat_snapshot.forEach((subcat) => {
 							categories[cat].subcategories.push({
 								id: subcat.id,
-								...subcat.data()
+								...subcat.data(),
+								sub_subcategories: []
 							});
 						});
+
+						for (var subindex in categories[cat].subcategories) {
+							const sub_subcat_snapshot = await db
+								.collection("categories")
+								.doc(categories[cat].id)
+								.collection("subcategories")
+								.doc(categories[cat].subcategories[subindex].id)
+								.collection("sub-subcategories")
+								.get();
+							sub_subcat_snapshot.forEach((subsubcat) => {
+								categories[cat].subcategories[subindex].sub_subcategories.push({
+									id: subsubcat.id,
+									...subsubcat.data()
+								});
+							});
+						}
 					}
 
 					return resolve({
@@ -618,6 +637,187 @@ const routes = [
 		}
 	},
 
+	{
+		method: "GET",
+		path: "/api/category/{id}/subcategories/{subcat_id}/subsubcategories",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Get sub-subcategories",
+			notes: "Use get method to get all sub-subcategories",
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.id;
+				try {
+					const sub_subcategories_snapshot = await db
+						.collection("categories")
+						.doc(id)
+						.collection("subcategories")
+						.doc(subcat_id)
+						.collection("sub-subcategories")
+						.get();
+					const sub_subcategories = [];
+
+					sub_subcategories_snapshot.forEach((doc) => {
+						sub_subcategories.push({ id: doc.id, ...doc.data() });
+					});
+
+					return resolve({
+						status: "success",
+						message: "Sub-subcategories fetched successfully",
+						sub_subcategories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/category/{id}/subcategories/{subcat_id}/subsubcategories",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Upload sub-subcategory data",
+			notes: "Upload sub-subcategory data",
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string()
+				}),
+				payload: {
+					sub_subcategory_name: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const newSubSubcategory = {
+					sub_subcategory_name: request.payload.sub_subcategory_name
+				};
+
+				try {
+					await db
+						.collection("categories")
+						.doc(request.params.id)
+						.collection("subcategories")
+						.doc(request.params.subcat_id)
+						.collection("sub-subcategories")
+						.add(newSubSubcategory);
+					return resolve({ message: "Sub-subcategory added successfully!" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "PUT",
+		path:
+			"/api/category/{id}/subcategories/{subcat_id}/subsubcategories/{subsubcat_id}",
+
+		config: {
+			tags: ["api", "Categories"],
+			description: "Update sub-subcategory data",
+			notes: "Update sub-subcategory data by id",
+			cors: {
+				origin: ["*"],
+				additionalHeaders: ["cache-control", "x-requested-with"]
+			},
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string(),
+					subsubcat_id: Joi.string()
+				}),
+				payload: {
+					sub_subcategory_name: Joi.string().optional()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const newSubSubcategory = {
+					sub_subcategory_name: request.payload.sub_subcategory_name
+				};
+
+				try {
+					await db
+						.collection("categories")
+						.doc(request.params.id)
+						.collection("subcategories")
+						.doc(request.params.subcat_id)
+						.collection("sub-subcategories")
+						.doc(request.params.subsubcat_id)
+						.set(newSubSubcategory, { merge: true })
+						.then((res) => {
+							console.log(res);
+							return resolve({
+								message: "Sub-subcategory edited successfully"
+							});
+						})
+						.catch((err) => {
+							console.log(err.message);
+							return reject(err);
+						});
+				} catch (err) {
+					console.log(err.message);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path:
+			"/api/category/{id}/subcategories/{subcat_id}/subsubcategories/{subsubcat_id}",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Delete category's data by id",
+			notes: "Delete category",
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string(),
+					subsubcat_id: Joi.string()
+				})
+			},
+			handler: async (request, reply) => {
+				let pr = async (resolve, reject) => {
+					const id = request.params.id;
+
+					try {
+						await db
+							.collection("categories")
+							.doc(request.params.id)
+							.collection("subcategories")
+							.doc(request.params.subcat_id)
+							.collection("sub-subcategories")
+							.doc(request.params.subsubcat_id)
+							.delete();
+
+						return resolve({
+							status: "success",
+							message: "Sub subcategory deleted successfully!"
+						});
+					} catch (err) {
+						reject({ message: err.message });
+					}
+				};
+				return new Promise(pr);
+			}
+		}
+	},
 	{
 		method: "GET",
 		path: "/api/cart/{user_id}",
