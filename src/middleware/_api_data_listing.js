@@ -619,6 +619,75 @@ const routes = [
 	},
 	{
 		method: "GET",
+		path: "/api/category/{id}",
+		config: {
+			tags: ["api", "Categories"],
+			description: "Get category by id",
+			notes: "Use get method to get category by id",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.id;
+				try {
+					const category_doc = await db
+						.collection("categories")
+						.doc(id)
+						.get();
+					const category = {
+						id: category_doc.id,
+						...category_doc.data(),
+						subcategories: []
+					};
+
+					const subcat_snapshot = await db
+						.collection("categories")
+						.doc(category_doc.id)
+						.collection("subcategories")
+						.get();
+					subcat_snapshot.forEach((subcat) => {
+						category.subcategories.push({
+							id: subcat.id,
+							...subcat.data(),
+							sub_subcategories: []
+						});
+					});
+
+					for (var subindex in category.subcategories) {
+						const sub_subcat_snapshot = await db
+							.collection("categories")
+							.doc(category.id)
+							.collection("subcategories")
+							.doc(category.subcategories[subindex].id)
+							.collection("sub-subcategories")
+							.get();
+						sub_subcat_snapshot.forEach((subsubcat) => {
+							category.subcategories[subindex].sub_subcategories.push({
+								id: subsubcat.id,
+								...subsubcat.data()
+							});
+						});
+					}
+
+					return resolve({
+						status: "success",
+						message: "Category fetched successfully",
+						category
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
 		path: "/api/category",
 		config: {
 			tags: ["api", "Categories"],
@@ -790,7 +859,7 @@ const routes = [
 		method: "GET",
 		path: "/api/category/{id}/subcategories",
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Subcategories"],
 			description: "Get subcategories",
 			notes: "Use get method to get all subcategories",
 			validate: {
@@ -831,7 +900,7 @@ const routes = [
 		method: "POST",
 		path: "/api/categories/{id}/subcategories",
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Subcategories"],
 			description: "Upload subcategory data",
 			notes: "Upload subcategory data",
 			validate: {
@@ -869,7 +938,7 @@ const routes = [
 		path: "/api/categories/{id}/subcategories/{subcat_id}",
 
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Subcategories"],
 			description: "Update subcategory data",
 			notes: "Update subcategory data by id",
 			cors: {
@@ -912,7 +981,7 @@ const routes = [
 		method: "DELETE",
 		path: "/api/categories/{id}/subcategories/{subcat_id}",
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Subcategories"],
 			description: "Delete category's data by id",
 			notes: "Delete category",
 			validate: {
@@ -950,7 +1019,7 @@ const routes = [
 		method: "GET",
 		path: "/api/category/{id}/subcategories/{subcat_id}/subsubcategories",
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Sub Subcategories"],
 			description: "Get sub-subcategories",
 			notes: "Use get method to get all sub-subcategories",
 			validate: {
@@ -968,7 +1037,7 @@ const routes = [
 						.collection("categories")
 						.doc(id)
 						.collection("subcategories")
-						.doc(subcat_id)
+						.doc(request.params.subcat_id)
 						.collection("sub-subcategories")
 						.get();
 					const sub_subcategories = [];
@@ -994,7 +1063,7 @@ const routes = [
 		method: "POST",
 		path: "/api/category/{id}/subcategories/{subcat_id}/subsubcategories",
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Sub Subcategories"],
 			description: "Upload sub-subcategory data",
 			notes: "Upload sub-subcategory data",
 			validate: {
@@ -1036,7 +1105,7 @@ const routes = [
 			"/api/category/{id}/subcategories/{subcat_id}/subsubcategories/{subsubcat_id}",
 
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Sub Subcategories"],
 			description: "Update sub-subcategory data",
 			notes: "Update sub-subcategory data by id",
 			cors: {
@@ -1070,7 +1139,6 @@ const routes = [
 						.doc(request.params.subsubcat_id)
 						.set(newSubSubcategory, { merge: true })
 						.then((res) => {
-							console.log(res);
 							return resolve({
 								message: "Sub-subcategory edited successfully"
 							});
@@ -1091,7 +1159,7 @@ const routes = [
 		path:
 			"/api/category/{id}/subcategories/{subcat_id}/subsubcategories/{subsubcat_id}",
 		config: {
-			tags: ["api", "Categories"],
+			tags: ["api", "Sub Subcategories"],
 			description: "Delete category's data by id",
 			notes: "Delete category",
 			validate: {
