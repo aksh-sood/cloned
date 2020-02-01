@@ -404,7 +404,7 @@ const routes = [
 				payload: {
 					product_name: Joi.string(),
 					description: Joi.string(),
-					featuredImageId: Joi.string(),
+					featuredImageId: Joi.string().optional(),
 					images: Joi.array().items(Joi.string()),
 					category_id: Joi.string(),
 					sub_subcat_id: Joi.string().optional(),
@@ -425,26 +425,73 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				var newProduct = {
-					product_name: request.payload.product_name,
-					description: request.payload.description,
-					featuredImageId: request.payload.featuredImageId,
-					images: request.payload.images,
-					category_id: request.payload.category_id,
-					sub_subcat_id: request.payload.sub_subcat_id,
-					subcat_id: request.payload.subcat_id,
-					inStock: request.payload.inStock,
-					seller: request.payload.seller,
-					stars: request.payload.stars,
-					likes: request.payload.likes,
-					total_reviews: request.payload.total_reviews,
-					mrp: request.payload.mrp,
-					discounted_price: request.payload.discounted_price,
-					discount: request.payload.discount,
-					highlights: request.payload.highlights,
-					is_verified: request.payload.is_verified,
-					sizes: request.payload.sizes
-				};
+				let newProduct;
+				if (request.payload.subcat_id) {
+					if (request.payload.sub_subcat_id) {
+						newProduct = {
+							product_name: request.payload.product_name,
+							description: request.payload.description,
+							featuredImageId: request.payload.featuredImageId,
+							images: request.payload.images,
+							category_id: request.payload.category_id,
+							sub_subcat_id: request.payload.sub_subcat_id,
+							subcat_id: request.payload.subcat_id,
+							inStock: request.payload.inStock,
+							seller: request.payload.seller,
+							stars: request.payload.stars,
+							likes: request.payload.likes,
+							total_reviews: request.payload.total_reviews,
+							mrp: request.payload.mrp,
+							discounted_price: request.payload.discounted_price,
+							discount: request.payload.discount,
+							highlights: request.payload.highlights,
+							is_verified: request.payload.is_verified,
+							sizes: request.payload.sizes
+						};
+					} else {
+						newProduct = {
+							product_name: request.payload.product_name,
+							description: request.payload.description,
+							featuredImageId: request.payload.featuredImageId,
+							images: request.payload.images,
+							category_id: request.payload.category_id,
+							subcat_id: request.payload.subcat_id,
+							sub_subcat_id: "",
+							inStock: request.payload.inStock,
+							seller: request.payload.seller,
+							stars: request.payload.stars,
+							likes: request.payload.likes,
+							total_reviews: request.payload.total_reviews,
+							mrp: request.payload.mrp,
+							discounted_price: request.payload.discounted_price,
+							discount: request.payload.discount,
+							highlights: request.payload.highlights,
+							is_verified: request.payload.is_verified,
+							sizes: request.payload.sizes
+						};
+					}
+				} else {
+					newProduct = {
+						product_name: request.payload.product_name,
+						description: request.payload.description,
+						featuredImageId: request.payload.featuredImageId,
+						images: request.payload.images,
+						category_id: request.payload.category_id,
+						sub_subcat_id: "",
+						subcat_id: "",
+						inStock: request.payload.inStock,
+						seller: request.payload.seller,
+						stars: request.payload.stars,
+						likes: request.payload.likes,
+						total_reviews: request.payload.total_reviews,
+						mrp: request.payload.mrp,
+						discounted_price: request.payload.discounted_price,
+						discount: request.payload.discount,
+						highlights: request.payload.highlights,
+						is_verified: request.payload.is_verified,
+						sizes: request.payload.sizes
+					};
+				}
 
 				try {
 					await db.collection("products").add(newProduct);
