@@ -919,7 +919,7 @@ const routes = [
 						.collection("categories")
 						.doc(id)
 						.collection("subcategories")
-						.get(request.params.subcat_id)
+						.doc(request.params.subcat_id)
 						.get();
 
 					const subcategory = {
@@ -931,7 +931,7 @@ const routes = [
 						.collection("categories")
 						.doc(id)
 						.collection("subcategories")
-						.doc(request.payload.subcat_id)
+						.doc(request.params.subcat_id)
 						.collection("sub-subcategories")
 						.get();
 					sub_subcat_snapshot.forEach((subsubcat) => {
@@ -944,7 +944,7 @@ const routes = [
 					return resolve({
 						status: "success",
 						message: "Subcategories fetched successfully",
-						subcategories
+						subcategory
 					});
 				} catch (err) {
 					console.log(err.message);
