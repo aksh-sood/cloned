@@ -896,6 +896,64 @@ const routes = [
 			return new Promise(pr);
 		}
 	},
+
+	{
+		method: "GET",
+		path: "/api/category/{id}/subcategories/{subcat_id}",
+		config: {
+			tags: ["api", "Subcategories"],
+			description: "Get subcategory by id",
+			notes: "Use get method to get subcategory by id",
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.id;
+				try {
+					const subcategory_doc = await db
+						.collection("categories")
+						.doc(id)
+						.collection("subcategories")
+						.get(request.params.subcat_id)
+						.get();
+
+					const subcategory = {
+						id: subcategory_doc.id,
+						...subcategory_doc.data(),
+						sub_subcategories: []
+					};
+					const sub_subcat_snapshot = await db
+						.collection("categories")
+						.doc(id)
+						.collection("subcategories")
+						.doc(request.payload.subcat_id)
+						.collection("sub-subcategories")
+						.get();
+					sub_subcat_snapshot.forEach((subsubcat) => {
+						subcategory.sub_subcategories.push({
+							id: subsubcat.id,
+							...subsubcat.data()
+						});
+					});
+
+					return resolve({
+						status: "success",
+						message: "Subcategories fetched successfully",
+						subcategories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
 	{
 		method: "POST",
 		path: "/api/categories/{id}/subcategories",
