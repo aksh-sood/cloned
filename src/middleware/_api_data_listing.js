@@ -1072,7 +1072,6 @@ const routes = [
 			}
 		}
 	},
-
 	{
 		method: "GET",
 		path: "/api/category/{id}/subcategories/{subcat_id}/subsubcategories",
@@ -1108,6 +1107,52 @@ const routes = [
 						status: "success",
 						message: "Sub-subcategories fetched successfully",
 						sub_subcategories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
+		path:
+			"/api/category/{id}/subcategories/{subcat_id}/subsubcategories/{sub_subcat_id}",
+		config: {
+			tags: ["api", "Sub Subcategories"],
+			description: "Get sub-subcategory by id",
+			notes: "Use get method to get sub-subcategory by id",
+			validate: {
+				params: Joi.object({
+					id: Joi.string(),
+					subcat_id: Joi.string(),
+					sub_subcat_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.id;
+				try {
+					const sub_subcategories_doc = await db
+						.collection("categories")
+						.doc(id)
+						.collection("subcategories")
+						.doc(request.params.subcat_id)
+						.collection("sub-subcategories")
+						.doc(request.params.sub_subcat_id)
+						.get();
+					const sub_subcategory = {
+						id: sub_subcategories_doc.id,
+						...sub_subcategories_doc.data()
+					};
+
+					return resolve({
+						status: "success",
+						message: "Sub-subcategory fetched successfully",
+						sub_subcategory
 					});
 				} catch (err) {
 					console.log(err.message);
