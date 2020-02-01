@@ -1269,7 +1269,8 @@ const routes = [
 			validate: {
 				payload: {
 					product_id: Joi.string(),
-					quantity: Joi.string()
+					quantity: Joi.string(),
+					selected_size: Joi.string().optional()
 				},
 				params: Joi.object({
 					user_id: Joi.string()
@@ -1279,12 +1280,25 @@ const routes = [
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
-					await db
-						.collection("cart")
-						.doc(request.params.user_id)
-						.collection("items")
-						.doc(request.payload.product_id)
-						.set({ quantity: request.payload.quantity });
+					request.payload.selected_size
+						? await db
+								.collection("cart")
+								.doc(request.params.user_id)
+								.collection("items")
+								.doc(request.payload.product_id)
+								.set({
+									quantity: request.payload.quantity,
+									selected_size: request.payload.selected_size
+								})
+						: await db
+								.collection("cart")
+								.doc(request.params.user_id)
+								.collection("items")
+								.doc(request.payload.product_id)
+								.set({
+									quantity: request.payload.quantity,
+									selected_size: "NA"
+								});
 					return resolve({ message: "Product added to cart successfully" });
 				} catch (err) {
 					return reject(err);
@@ -1303,7 +1317,8 @@ const routes = [
 			validate: {
 				payload: {
 					product_id: Joi.string().optional(),
-					quantity: Joi.string().optional()
+					quantity: Joi.string().optional(),
+					selected_size: Joi.string().optional()
 				},
 				params: Joi.object({
 					user_id: Joi.string()
@@ -1318,7 +1333,13 @@ const routes = [
 						.doc(request.params.user_id)
 						.collection("items")
 						.doc(request.payload.product_id)
-						.set({ quantity: request.payload.quantity }, { merge: true });
+						.set(
+							{
+								quantity: request.payload.quantity,
+								selected_size: request.payload.selected_size
+							},
+							{ merge: true }
+						);
 					return resolve({ message: "Product updated in cart successfully" });
 				} catch (err) {
 					return reject(err);
