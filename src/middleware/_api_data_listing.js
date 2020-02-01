@@ -1983,6 +1983,137 @@ const routes = [
 			};
 			return new Promise(pr);
 		}
+	},
+	{
+		method: "GET",
+		path: "/api/wishlist/{user_id}",
+		config: {
+			tags: ["api", "Wishlist"],
+			description: "Get wishlist data by user id",
+			notes: "Use get method to get wishlist data by user id",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				const id = request.params.user_id;
+				try {
+					var wishlistDoc = await db
+						.collection("wishlist")
+						.doc(id)
+						.get();
+
+					let items = [];
+
+					var itemsSnapshot = await db
+						.collection("wishlist")
+						.doc(id)
+						.collection("items")
+						.get();
+					itemsSnapshot.forEach((doc) => {
+						items.push({ id: doc.id });
+					});
+
+					var wishlist = { id: wishlistDoc.id, items: [] };
+
+					for (var item in items) {
+						const id = items[item].id;
+						const product_doc = await db
+							.collection("products")
+							.doc(id)
+							.get();
+						const product_info = {
+							id: product_doc.id,
+							quantity: items[item].quantity,
+							...product_doc.data()
+						};
+						wishlist.items.push(product_info);
+					}
+					console.log(wishlist);
+					// result
+
+					return resolve({
+						status: "success",
+						message: "Wishlist data fetched successfully",
+						wishlist
+					});
+				} catch (err) {
+					console.log(err);
+					return reject({ message: err });
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/wishlist/{user_id}",
+		config: {
+			tags: ["api", "Wishlist"],
+			description: "Add to wishlist",
+			notes: "Send product details to add to wishlist",
+			validate: {
+				payload: {
+					product_id: Joi.string()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("cart")
+						.doc(request.params.user_id)
+						.collection("items")
+						.doc(request.payload.product_id)
+						.set({ product_id: request.payload.product_id });
+					return resolve({ message: "Product added to wishlist successfully" });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+
+	{
+		method: "DELETE",
+		path: "/api/wishlist/{user_id}/by-product-id/{product_id}",
+		config: {
+			tags: ["api", "Cart"],
+			description: "Delete product from cart by id",
+			notes: "Delete product from cart",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string(),
+					product_id: Joi.string()
+				})
+			},
+			handler: async (request, reply) => {
+				let pr = async (resolve, reject) => {
+					try {
+						await db
+							.collection("cart")
+							.doc(request.params.user_id)
+							.collection("items")
+							.doc(request.params.product_id)
+							.delete();
+
+						resolve({ message: "Item deleted from wishlist successfully" });
+					} catch (err) {
+						console.log(err.message);
+						reject(err);
+					}
+				};
+				return new Promise(pr);
+			}
+		}
 	}
 ];
 

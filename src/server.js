@@ -49,15 +49,6 @@ const init = async () => {
 		}
 	});
 
-	await server.route({
-		method: "GET",
-		path: "/images_astro/{file*}",
-		handler: {
-			directory: {
-				path: __dirname + "/images_astro"
-			}
-		}
-	});
 	try {
 		server.route(routes);
 	} catch (err) {
