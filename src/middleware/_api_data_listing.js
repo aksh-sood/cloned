@@ -191,7 +191,7 @@ const routes = [
 					product_snapshot.forEach((doc) => {
 						products.push({ id: doc.id, ...doc.data() });
 					});
-
+					
 					return resolve({
 						status: "success",
 						message: "Products fetched successfully",
@@ -489,7 +489,7 @@ const routes = [
 					.collection("categories")
 					.doc(request.payload.category_id)
 					.get();
-				category = subcat_doc.data();
+				category = cat_doc.data();
 				if (request.payload.subcat_id) {
 					subcat_doc = await db
 						.collection("categories")
