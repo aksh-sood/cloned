@@ -1635,8 +1635,10 @@ const routes = [
 						.get();
 
 					let item_ids = [];
+					let items = [];
 					itemSnapshot.forEach((doc) => {
 						item_ids.push(doc.id);
+						items.push({ id: doc.id, ...doc.data() });
 					});
 					for (var item in item_ids) {
 						console.log(item);
@@ -1654,7 +1656,8 @@ const routes = [
 						.add({
 							payment_id: request.payload.payment_id,
 							total_amount: request.payload.total_amount,
-							address
+							address,
+							items
 						});
 					return resolve({ message: "Order added successfully" });
 				} catch (err) {
@@ -1690,7 +1693,65 @@ const routes = [
 					ordersSnapshot.forEach((doc) => {
 						orders.push({ id: doc.id, ...doc.data() });
 					});
+
+					for (var index in orders) {
+						for (var index2 in orders[index].items) {
+							var item = orders[index].items[index2];
+							var product_doc = await db
+								.collection("products")
+								.doc(orders[index].items[index2].id)
+								.get();
+							var product_info = product_doc.data();
+							item = { product_info, ...item };
+							orders[index].items[index2] = item;
+						}
+					}
+
 					return resolve({ message: "Orders fetched successfully", orders });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/orders/{user_id}/{order_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Fetch order by id of user",
+			notes: "Fetch order by id of user",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string(),
+					order_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					var order_doc = await db
+						.collection("user-orders")
+						.doc(request.params.user_id)
+						.collection("orders")
+						.doc(request.params.order_id)
+						.get();
+					let order = { id: order_doc.id, ...order_doc.data() };
+
+					for (var index in order.items) {
+						var item = order.items[index];
+						var product_doc = await db
+							.collection("products")
+							.doc(order.items[index].id)
+							.get();
+						var product_info = product_doc.data();
+						item = { product_info, ...item };
+						order.items[index] = item;
+					}
+
+					return resolve({ message: "Orders fetched successfully", order });
 				} catch (err) {
 					return reject(err);
 				}
