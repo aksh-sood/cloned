@@ -41,43 +41,6 @@ const routes = [
 						products.push({ id: doc.id, ...doc.data() });
 					});
 
-					for (var index in products) {
-						var prod = products[index];
-						const category_doc = await db
-							.collection("categories")
-							.doc(prod.category_id)
-							.get();
-						prod = { ...prod, category: category_doc.data() };
-
-						if (prod.subcat_id !== "") {
-							const subcategory_doc = await db
-								.collection("categories")
-								.doc(prod.category_id)
-								.collection("subcategories")
-								.doc(prod.subcat_id)
-								.get();
-
-							prod = { ...prod, subcategory: subcategory_doc.data() };
-						}
-
-						if (prod.sub_subcat_id !== "") {
-							const sub_subcategory_doc = await db
-								.collection("categories")
-								.doc(prod.category_id)
-								.collection("subcategories")
-								.doc(prod.subcat_id)
-								.collection("sub-subcategories")
-								.doc(prod.sub_subcat_id)
-								.get();
-
-							prod = {
-								...prod,
-								sub_subcategory: sub_subcategory_doc.data()
-							};
-						}
-						products[index] = prod;
-					}
-
 					if (sorting_query === "alphabetical") {
 						products = _.orderBy(
 							products,
@@ -229,43 +192,6 @@ const routes = [
 						products.push({ id: doc.id, ...doc.data() });
 					});
 
-					for (var index in products) {
-						var prod = products[index];
-						const category_doc = await db
-							.collection("categories")
-							.doc(prod.category_id)
-							.get();
-						prod = { ...prod, category: category_doc.data() };
-
-						if (prod.subcat_id !== "") {
-							const subcategory_doc = await db
-								.collection("categories")
-								.doc(prod.category_id)
-								.collection("subcategories")
-								.doc(prod.subcat_id)
-								.get();
-
-							prod = { ...prod, subcategory: subcategory_doc.data() };
-						}
-
-						if (prod.sub_subcat_id !== "") {
-							const sub_subcategory_doc = await db
-								.collection("categories")
-								.doc(prod.category_id)
-								.collection("subcategories")
-								.doc(prod.subcat_id)
-								.collection("sub-subcategories")
-								.doc(prod.sub_subcat_id)
-								.get();
-
-							prod = {
-								...prod,
-								sub_subcategory: sub_subcategory_doc.data()
-							};
-						}
-						products[index] = prod;
-					}
-
 					return resolve({
 						status: "success",
 						message: "Products fetched successfully",
@@ -296,38 +222,7 @@ const routes = [
 						.doc(id)
 						.get();
 					var product = { id: product_doc.id, ...product_doc.data() };
-					const category_doc = await db
-						.collection("categories")
-						.doc(product.category_id)
-						.get();
-					product = { ...product, category: category_doc.data() };
 
-					if (product.subcat_id !== "") {
-						const subcategory_doc = await db
-							.collection("categories")
-							.doc(product.category_id)
-							.collection("subcategories")
-							.doc(product.subcat_id)
-							.get();
-
-						product = { ...product, subcategory: subcategory_doc.data() };
-					}
-
-					if (product.sub_subcat_id !== "") {
-						const sub_subcategory_doc = await db
-							.collection("categories")
-							.doc(product.category_id)
-							.collection("subcategories")
-							.doc(product.subcat_id)
-							.collection("sub-subcategories")
-							.doc(product.sub_subcat_id)
-							.get();
-
-						product = {
-							...product,
-							sub_subcategory: sub_subcategory_doc.data()
-						};
-					}
 					return resolve({
 						status: "success",
 						message: "Product fetched successfully",
@@ -425,9 +320,37 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				let newProduct;
+				let newProduct,
+					cat_doc,
+					subcat_doc,
+					sub_subcat_doc,
+					category,
+					subcategory,
+					sub_subcategory;
+
+				cat_doc = await db
+					.collection("categories")
+					.doc(request.payload.category_id)
+					.get();
+				category = subcat_doc.data();
 				if (request.payload.subcat_id) {
+					subcat_doc = await db
+						.collection("categories")
+						.doc(request.payload.category_id)
+						.collection("subcategories")
+						.doc(request.payload.subcat_id)
+						.get();
+					subcategory = subcat_doc.data();
 					if (request.payload.sub_subcat_id) {
+						sub_subcat_doc = await db
+							.collection("categories")
+							.doc(request.payload.category_id)
+							.collection("subcategories")
+							.doc(request.payload.subcat_id)
+							.collection("sub-subcategories")
+							.doc(request.payload.sub_subcat_id)
+							.get();
+						sub_subcategory = sub_subcat_doc.data();
 						newProduct = {
 							product_name: request.payload.product_name,
 							description: request.payload.description,
@@ -446,7 +369,10 @@ const routes = [
 							discount: request.payload.discount,
 							highlights: request.payload.highlights,
 							is_verified: request.payload.is_verified,
-							sizes: request.payload.sizes
+							sizes: request.payload.sizes,
+							sub_subcategory,
+							subcategory,
+							category
 						};
 					} else {
 						newProduct = {
@@ -467,7 +393,9 @@ const routes = [
 							discount: request.payload.discount,
 							highlights: request.payload.highlights,
 							is_verified: request.payload.is_verified,
-							sizes: request.payload.sizes
+							sizes: request.payload.sizes,
+							subcategory,
+							category
 						};
 					}
 				} else {
@@ -489,7 +417,8 @@ const routes = [
 						discount: request.payload.discount,
 						highlights: request.payload.highlights,
 						is_verified: request.payload.is_verified,
-						sizes: request.payload.sizes
+						sizes: request.payload.sizes,
+						category
 					};
 				}
 
@@ -548,26 +477,107 @@ const routes = [
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
-				let newProduct = {
-					product_name: request.payload.product_name,
-					description: request.payload.description,
-					featuredImageId: request.payload.featuredImageId,
-					images: request.payload.images,
-					category_id: request.payload.category_id,
-					sub_subcat_id: request.payload.sub_subcat_id,
-					subcat_id: request.payload.subcat_id,
-					inStock: request.payload.inStock,
-					seller: request.payload.seller,
-					stars: request.payload.stars,
-					likes: request.payload.likes,
-					total_reviews: request.payload.total_reviews,
-					mrp: request.payload.mrp,
-					discounted_price: request.payload.discounted_price,
-					discount: request.payload.discount,
-					highlights: request.payload.highlights,
-					is_verified: request.payload.is_verified,
-					sizes: request.payload.sizes
-				};
+				let newProduct,
+					cat_doc,
+					subcat_doc,
+					sub_subcat_doc,
+					category,
+					subcategory,
+					sub_subcategory;
+
+				cat_doc = await db
+					.collection("categories")
+					.doc(request.payload.category_id)
+					.get();
+				category = subcat_doc.data();
+				if (request.payload.subcat_id) {
+					subcat_doc = await db
+						.collection("categories")
+						.doc(request.payload.category_id)
+						.collection("subcategories")
+						.doc(request.payload.subcat_id)
+						.get();
+					subcategory = subcat_doc.data();
+					if (request.payload.sub_subcat_id) {
+						sub_subcat_doc = await db
+							.collection("categories")
+							.doc(request.payload.category_id)
+							.collection("subcategories")
+							.doc(request.payload.subcat_id)
+							.collection("sub-subcategories")
+							.doc(request.payload.sub_subcat_id)
+							.get();
+						sub_subcategory = sub_subcat_doc.data();
+						newProduct = {
+							product_name: request.payload.product_name,
+							description: request.payload.description,
+							featuredImageId: request.payload.featuredImageId,
+							images: request.payload.images,
+							category_id: request.payload.category_id,
+							sub_subcat_id: request.payload.sub_subcat_id,
+							subcat_id: request.payload.subcat_id,
+							inStock: request.payload.inStock,
+							seller: request.payload.seller,
+							stars: request.payload.stars,
+							likes: request.payload.likes,
+							total_reviews: request.payload.total_reviews,
+							mrp: request.payload.mrp,
+							discounted_price: request.payload.discounted_price,
+							discount: request.payload.discount,
+							highlights: request.payload.highlights,
+							is_verified: request.payload.is_verified,
+							sizes: request.payload.sizes,
+							sub_subcategory,
+							subcategory,
+							category
+						};
+					} else {
+						newProduct = {
+							product_name: request.payload.product_name,
+							description: request.payload.description,
+							featuredImageId: request.payload.featuredImageId,
+							images: request.payload.images,
+							category_id: request.payload.category_id,
+							subcat_id: request.payload.subcat_id,
+							sub_subcat_id: "",
+							inStock: request.payload.inStock,
+							seller: request.payload.seller,
+							stars: request.payload.stars,
+							likes: request.payload.likes,
+							total_reviews: request.payload.total_reviews,
+							mrp: request.payload.mrp,
+							discounted_price: request.payload.discounted_price,
+							discount: request.payload.discount,
+							highlights: request.payload.highlights,
+							is_verified: request.payload.is_verified,
+							sizes: request.payload.sizes,
+							subcategory,
+							category
+						};
+					}
+				} else {
+					newProduct = {
+						product_name: request.payload.product_name,
+						description: request.payload.description,
+						featuredImageId: request.payload.featuredImageId,
+						images: request.payload.images,
+						category_id: request.payload.category_id,
+						sub_subcat_id: "",
+						subcat_id: "",
+						inStock: request.payload.inStock,
+						seller: request.payload.seller,
+						stars: request.payload.stars,
+						likes: request.payload.likes,
+						total_reviews: request.payload.total_reviews,
+						mrp: request.payload.mrp,
+						discounted_price: request.payload.discounted_price,
+						discount: request.payload.discount,
+						highlights: request.payload.highlights,
+						is_verified: request.payload.is_verified,
+						sizes: request.payload.sizes,
+						category
+					};
+				}
 
 				db.collection("products")
 					.doc(request.payload.id)
