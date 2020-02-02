@@ -175,6 +175,51 @@ const routes = [
 		}
 	},
 	{
+		method: "POST",
+		path: "/api/products/paginated",
+		config: {
+			tags: ["api", "Products"],
+			description: "Get products",
+			notes: "Use get method to get all products",
+			validate: {
+				payload: {
+					page_limit: Joi.number(),
+					page_number: Joi.number(),
+					order_by: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const { page_limit, page_number, order_by } = request.payload;
+
+					const ref = await db
+						.collection("products")
+						.orderBy(order_by)
+						.limit(page_limit)
+						.offset(page_limit * (page_number - 1));
+					const product_snapshot = await ref.get();
+					const products = [];
+
+					product_snapshot.forEach((doc) => {
+						products.push({ id: doc.id, ...doc.data() });
+					});
+
+					return resolve({
+						status: "success",
+						message: "Products fetched successfully",
+						products
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
 		method: "GET",
 		path: "/api/products",
 		config: {
@@ -191,7 +236,7 @@ const routes = [
 					product_snapshot.forEach((doc) => {
 						products.push({ id: doc.id, ...doc.data() });
 					});
-					
+
 					return resolve({
 						status: "success",
 						message: "Products fetched successfully",
