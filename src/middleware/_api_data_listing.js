@@ -1704,7 +1704,7 @@ const routes = [
 							.doc(item_ids[item])
 							.delete();
 					}
-					await db
+					const order_doc = await db
 						.collection("user-orders")
 						.doc(request.params.user_id)
 						.collection("orders")
@@ -1714,7 +1714,10 @@ const routes = [
 							address,
 							items
 						});
-					return resolve({ message: "Order added successfully" });
+					return resolve({
+						message: "Order added successfully",
+						order_id: order_doc.id
+					});
 				} catch (err) {
 					console.log(err.message);
 					return reject(err);
