@@ -359,7 +359,10 @@ const routes = [
 					discount: Joi.number(),
 					highlights: Joi.array().items(Joi.string()),
 					is_verified: Joi.bool(),
-					sizes: Joi.array().items(Joi.string())
+					sizes: Joi.array().items(Joi.string()),
+					offer_ids: Joi.array()
+						.items(Joi.string())
+						.optional()
 				}
 			}
 		},
@@ -372,7 +375,9 @@ const routes = [
 					category,
 					subcategory,
 					sub_subcategory;
-
+				let offer_ids = request.payload.offer_ids
+					? request.payload.offer_ids
+					: [];
 				cat_doc = await db
 					.collection("categories")
 					.doc(request.payload.category_id)
@@ -417,7 +422,8 @@ const routes = [
 							sizes: request.payload.sizes,
 							sub_subcategory,
 							subcategory,
-							category
+							category,
+							offer_ids
 						};
 					} else {
 						newProduct = {
@@ -440,7 +446,8 @@ const routes = [
 							is_verified: request.payload.is_verified,
 							sizes: request.payload.sizes,
 							subcategory,
-							category
+							category,
+							offer_ids
 						};
 					}
 				} else {
@@ -463,7 +470,8 @@ const routes = [
 						highlights: request.payload.highlights,
 						is_verified: request.payload.is_verified,
 						sizes: request.payload.sizes,
-						category
+						category,
+						offer_ids
 					};
 				}
 
@@ -530,6 +538,9 @@ const routes = [
 					subcategory,
 					sub_subcategory;
 
+				let offer_ids = request.payload.offer_ids
+					? request.payload.offer_ids
+					: [];
 				cat_doc = await db
 					.collection("categories")
 					.doc(request.payload.category_id)
@@ -574,7 +585,8 @@ const routes = [
 							sizes: request.payload.sizes,
 							sub_subcategory,
 							subcategory,
-							category
+							category,
+							offer_ids
 						};
 					} else {
 						newProduct = {
@@ -597,7 +609,8 @@ const routes = [
 							is_verified: request.payload.is_verified,
 							sizes: request.payload.sizes,
 							subcategory,
-							category
+							category,
+							offer_ids
 						};
 					}
 				} else {
@@ -620,7 +633,8 @@ const routes = [
 						highlights: request.payload.highlights,
 						is_verified: request.payload.is_verified,
 						sizes: request.payload.sizes,
-						category
+						category,
+						offer_ids
 					};
 				}
 
@@ -1814,6 +1828,58 @@ const routes = [
 
 					return resolve({ message: "Orders fetched successfully", order });
 				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/save-offer-image",
+		config: {
+			plugins: {
+				"hapi-swagger": {
+					payloadType: "form"
+				}
+			},
+			tags: ["api", "offers"],
+			description: "Upload offer image",
+			notes: "Upload offer image",
+			payload: {
+				output: "stream",
+				parse: true,
+				allow: "multipart/form-data"
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const file = request.payload.file;
+					const gcsname = new Date().toISOString() + "-" + file.hapi.filename;
+
+					let s3, params;
+
+					s3 = new AWS.S3();
+
+					const options = { partSize: 10 * 1024 * 1024, queueSize: 1 };
+					var folder = "offer-images";
+					params = {
+						Bucket: "brandedbaba-bucket",
+						Body: file,
+						Key: `${folder}/${gcsname}`,
+						ContentType: file.hapi.headers["content-type"],
+						ACL: "public-read"
+					};
+
+					const response = await s3.upload(params, options).promise();
+
+					return resolve({
+						message: "Image uploaded to AWS",
+						image_url: response.Location
+					});
+				} catch (err) {
+					console.log(err.message);
 					return reject(err);
 				}
 			};
