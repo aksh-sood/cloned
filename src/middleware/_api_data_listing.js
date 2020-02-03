@@ -1586,8 +1586,10 @@ const routes = [
 				payload: {
 					first_name: Joi.string(),
 					last_name: Joi.string(),
-					company: Joi.string(),
+
 					city: Joi.string(),
+					state: Joi.string(),
+					pincode: Joi.string(),
 					country: Joi.string(),
 					full_address: Joi.string(),
 					phone: Joi.string()
@@ -1607,8 +1609,9 @@ const routes = [
 						.add({
 							first_name: request.payload.first_name,
 							last_name: request.payload.last_name,
-							company: request.payload.company,
 							city: request.payload.city,
+							state: request.payload.state,
+							pincode: request.payload.pincode,
 							country: request.payload.country,
 							full_address: request.payload.full_address,
 							phone: request.payload.phone
@@ -1751,7 +1754,7 @@ const routes = [
 					ordersSnapshot.forEach((doc) => {
 						orders.push({ id: doc.id, ...doc.data() });
 					});
-
+					console.log(orders);
 					for (var index in orders) {
 						for (var index2 in orders[index].items) {
 							var item = orders[index].items[index2];
@@ -1760,6 +1763,7 @@ const routes = [
 								.doc(orders[index].items[index2].id)
 								.get();
 							var product_info = product_doc.data();
+							console.log(product_info);
 							item = { product_info, ...item };
 							orders[index].items[index2] = item;
 						}
