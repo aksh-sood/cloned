@@ -1922,7 +1922,12 @@ const routes = [
 		config: {
 			tags: ["api", "offers"],
 			description: "Get offer by id",
-			notes: "Use get method to get a particular offer by id"
+			notes: "Use get method to get a particular offer by id",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			}
 		},
 		handler: async (request, h) => {
 			let pr = async (resolve, reject) => {
