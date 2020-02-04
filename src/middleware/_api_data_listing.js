@@ -252,6 +252,51 @@ const routes = [
 	},
 	{
 		method: "GET",
+		path: "/api/products/by_offer/{offer_id}",
+		config: {
+			tags: ["api", "Products"],
+			description: "Get products by offer id",
+			notes: "Use get method to get products by offer id",
+			validate: {
+				params: Joi.object({
+					offer_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const offer_id = request.params.offer_id;
+					const product_snapshot = await db.collection("products").get();
+					const products = [];
+
+					product_snapshot.forEach((doc) => {
+						products.push({ id: doc.id, ...doc.data() });
+					});
+
+					products = products.filter((product) => {
+						let found = false;
+						product.offer_ids.forEach((id) => {
+							if (id === offer_id) found = true;
+						});
+
+						return found;
+					});
+					return resolve({
+						status: "success",
+						message: "Products fetched successfully",
+						products
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
 		path: "/api/products/{id}",
 		config: {
 			tags: ["api", "Products"],
