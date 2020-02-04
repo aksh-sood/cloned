@@ -382,7 +382,7 @@ const routes = [
 					.collection("categories")
 					.doc(request.payload.category_id)
 					.get();
-				category = subcat_doc.data();
+				category = cat_doc.data();
 				if (request.payload.subcat_id) {
 					subcat_doc = await db
 						.collection("categories")
@@ -523,6 +523,9 @@ const routes = [
 						.optional(),
 					is_verified: Joi.bool().optional(),
 					sizes: Joi.array()
+						.items(Joi.string())
+						.optional(),
+					offer_ids: Joi.array()
 						.items(Joi.string())
 						.optional()
 				}
