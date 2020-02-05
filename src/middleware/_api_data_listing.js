@@ -1725,12 +1725,13 @@ const routes = [
 		config: {
 			tags: ["api", "Checkout"],
 			description: "Checkout from cart",
-			notes: "Checkout",
+			notes: "Call on successful transaction",
 			validate: {
 				payload: {
 					payment_id: Joi.string(),
 					total_amount: Joi.string(),
-					address_id: Joi.string()
+					address_id: Joi.string(),
+					payment_mode: Joi.string()
 				},
 				params: Joi.object({
 					user_id: Joi.string()
@@ -1776,11 +1777,81 @@ const routes = [
 						.add({
 							payment_id: request.payload.payment_id,
 							total_amount: request.payload.total_amount,
+							payment_status: "Payment Sucessful",
+							payment_mode: request.payload.payment_mode,
 							address,
 							items
 						});
 					return resolve({
 						message: "Order added successfully",
+						order_id: order_doc.id
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/failed-order/{user_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Add failed order",
+			notes: "Checkout",
+			validate: {
+				payload: {
+					payment_id: Joi.string(),
+					total_amount: Joi.string(),
+					address_id: Joi.string(),
+					payment_mode: Joi.string(),
+					payment_status: Joi.string()
+				},
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const address_doc = await db
+						.collection("saved-addresses")
+						.doc(request.params.user_id)
+						.collection("addresses")
+						.doc(request.payload.address_id)
+						.get();
+					const address = { id: address_doc.id, ...address_doc.data() };
+
+					const itemSnapshot = await db
+						.collection("cart")
+						.doc(request.params.user_id)
+						.collection("items")
+						.get();
+
+					let item_ids = [];
+					let items = [];
+					itemSnapshot.forEach((doc) => {
+						item_ids.push(doc.id);
+						items.push({ id: doc.id, ...doc.data() });
+					});
+
+					const order_doc = await db
+						.collection("user-orders")
+						.doc(request.params.user_id)
+						.collection("orders")
+						.add({
+							payment_id: request.payload.payment_id,
+							total_amount: request.payload.total_amount,
+							address,
+							items,
+							payment_status: request.payload.payment_status,
+							payment_mode: request.payload.payment_mode
+						});
+					return resolve({
+						message: "Failed order added successfully",
 						order_id: order_doc.id
 					});
 				} catch (err) {
