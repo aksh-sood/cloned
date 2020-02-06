@@ -1934,7 +1934,7 @@ const routes = [
 					payloadType: "form"
 				}
 			},
-			tags: ["api", "offers"],
+			tags: ["api", "Offers"],
 			description: "Upload offer image",
 			notes: "Upload offer image",
 			payload: {
@@ -1979,7 +1979,7 @@ const routes = [
 	},
 	{
 		method: "GET",
-		path: "/api/offers",
+		path: "/api/Offers",
 		config: {
 			tags: ["api", "offers"],
 			description: "Get all offers",
@@ -2011,7 +2011,7 @@ const routes = [
 		method: "GET",
 		path: "/api/offers/{id}",
 		config: {
-			tags: ["api", "offers"],
+			tags: ["api", "Offers"],
 			description: "Get offer by id",
 			notes: "Use get method to get a particular offer by id",
 			validate: {
@@ -2047,7 +2047,7 @@ const routes = [
 		method: "POST",
 		path: "/api/offers",
 		config: {
-			tags: ["api", "offers"],
+			tags: ["api", "Offers"],
 			description: "Add a new offer",
 			notes: "Post the required offer details to add a new offer",
 			validate: {
@@ -2087,7 +2087,7 @@ const routes = [
 		method: "PUT",
 		path: "/api/offers/{id}",
 		config: {
-			tags: ["api", "offers"],
+			tags: ["api", "Offers"],
 			description: "Update a offer data by it's ID",
 			notes: "Update offer data using offer ID",
 			validate: {
