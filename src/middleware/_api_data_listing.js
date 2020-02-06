@@ -268,7 +268,7 @@ const routes = [
 				try {
 					const offer_id = request.params.offer_id;
 					const product_snapshot = await db.collection("products").get();
-					const products = [];
+					var products = [];
 
 					product_snapshot.forEach((doc) => {
 						products.push({ id: doc.id, ...doc.data() });
@@ -278,6 +278,46 @@ const routes = [
 						let found = false;
 						product.offer_ids.forEach((id) => {
 							if (id === offer_id) found = true;
+						});
+
+						return found;
+					});
+					return resolve({
+						status: "success",
+						message: "Products fetched successfully",
+						products
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/products/trending",
+		config: {
+			tags: ["api", "Products"],
+			description: "Get trending products",
+			notes: "Use get method to get trending products"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const offer_id = request.params.offer_id;
+					const product_snapshot = await db.collection("products").get();
+					var products = [];
+
+					product_snapshot.forEach((doc) => {
+						products.push({ id: doc.id, ...doc.data() });
+					});
+
+					products = products.filter((product) => {
+						let found = false;
+						product.highlights.forEach((highlight) => {
+							if (highlight.toLowerCase() === "trending") found = true;
 						});
 
 						return found;
@@ -1646,14 +1686,13 @@ const routes = [
 			notes: "Save user address",
 			validate: {
 				payload: {
-					first_name: Joi.string(),
-					last_name: Joi.string(),
-
+					full_name: Joi.string(),
+					full_address: Joi.string(),
+					email: Joi.string(),
 					city: Joi.string(),
+					district: Joi.string(),
 					state: Joi.string(),
 					pincode: Joi.string(),
-					country: Joi.string(),
-					full_address: Joi.string(),
 					phone: Joi.string()
 				},
 				params: Joi.object({
@@ -1669,12 +1708,12 @@ const routes = [
 						.doc(request.params.user_id)
 						.collection("addresses")
 						.add({
-							first_name: request.payload.first_name,
-							last_name: request.payload.last_name,
+							full_name: request.payload.full_name,
+							email: request.payload.email,
 							city: request.payload.city,
 							state: request.payload.state,
 							pincode: request.payload.pincode,
-							country: request.payload.country,
+							district: request.payload.district,
 							full_address: request.payload.full_address,
 							phone: request.payload.phone
 						});
@@ -1794,74 +1833,7 @@ const routes = [
 			return new Promise(pr);
 		}
 	},
-	{
-		method: "POST",
-		path: "/api/failed-order/{user_id}",
-		config: {
-			tags: ["api", "Checkout"],
-			description: "Add failed order",
-			notes: "Checkout",
-			validate: {
-				payload: {
-					payment_id: Joi.string(),
-					total_amount: Joi.string(),
-					address_id: Joi.string(),
-					payment_mode: Joi.string(),
-					payment_status: Joi.string()
-				},
-				params: Joi.object({
-					user_id: Joi.string()
-				})
-			}
-		},
-		handler: async (request, reply) => {
-			let pr = async (resolve, reject) => {
-				try {
-					const address_doc = await db
-						.collection("saved-addresses")
-						.doc(request.params.user_id)
-						.collection("addresses")
-						.doc(request.payload.address_id)
-						.get();
-					const address = { id: address_doc.id, ...address_doc.data() };
 
-					const itemSnapshot = await db
-						.collection("cart")
-						.doc(request.params.user_id)
-						.collection("items")
-						.get();
-
-					let item_ids = [];
-					let items = [];
-					itemSnapshot.forEach((doc) => {
-						item_ids.push(doc.id);
-						items.push({ id: doc.id, ...doc.data() });
-					});
-
-					const order_doc = await db
-						.collection("user-orders")
-						.doc(request.params.user_id)
-						.collection("orders")
-						.add({
-							payment_id: request.payload.payment_id,
-							total_amount: request.payload.total_amount,
-							address,
-							items,
-							payment_status: request.payload.payment_status,
-							payment_mode: request.payload.payment_mode
-						});
-					return resolve({
-						message: "Failed order added successfully",
-						order_id: order_doc.id
-					});
-				} catch (err) {
-					console.log(err.message);
-					return reject(err);
-				}
-			};
-			return new Promise(pr);
-		}
-	},
 	{
 		method: "GET",
 		path: "/api/orders/{user_id}",
@@ -2285,7 +2257,7 @@ const routes = [
 			let pr = async (resolve, reject) => {
 				try {
 					await db
-						.collection("cart")
+						.collection("wishlist")
 						.doc(request.params.user_id)
 						.collection("items")
 						.doc(request.payload.product_id)
@@ -2316,7 +2288,7 @@ const routes = [
 				let pr = async (resolve, reject) => {
 					try {
 						await db
-							.collection("cart")
+							.collection("wishlist")
 							.doc(request.params.user_id)
 							.collection("items")
 							.doc(request.params.product_id)
