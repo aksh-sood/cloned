@@ -2275,7 +2275,7 @@ const routes = [
 		method: "DELETE",
 		path: "/api/wishlist/{user_id}/by-product-id/{product_id}",
 		config: {
-			tags: ["api", "Cart"],
+			tags: ["api", "Wishlist"],
 			description: "Delete product from cart by id",
 			notes: "Delete product from cart",
 			validate: {
