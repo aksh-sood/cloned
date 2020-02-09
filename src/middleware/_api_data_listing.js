@@ -1610,6 +1610,35 @@ const routes = [
 	},
 	{
 		method: "DELETE",
+		path: "/api/clear-cart/{user_id}",
+		config: {
+			tags: ["api", "Cart"],
+			description: "Delete cart",
+			notes: "Delete cart details",
+			validate: {
+				params: Joi.object({
+					user_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("cart")
+						.doc(request.params.user_id)
+						.delete();
+
+					return resolve({ message: "Cart cleared successfully" });
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
 		path: "/api/cart/{user_id}/by-product-id/{product_id}",
 		config: {
 			tags: ["api", "Cart"],
