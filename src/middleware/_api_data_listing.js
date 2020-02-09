@@ -2303,6 +2303,202 @@ const routes = [
 				return new Promise(pr);
 			}
 		}
+	},
+	{
+		method: "POST",
+		path: "/api/save-trending-category-image",
+		config: {
+			plugins: {
+				"hapi-swagger": {
+					payloadType: "form"
+				}
+			},
+			tags: ["api", "Trending"],
+			description: "Upload trending category image",
+			notes: "Upload trending category image",
+			payload: {
+				output: "stream",
+				parse: true,
+				allow: "multipart/form-data"
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const file = request.payload.file;
+					const gcsname = new Date().toISOString() + "-" + file.hapi.filename;
+
+					let s3, params;
+
+					s3 = new AWS.S3();
+
+					const options = { partSize: 10 * 1024 * 1024, queueSize: 1 };
+					var folder = "trending-category-images";
+					params = {
+						Bucket: "brandedbaba-bucket",
+						Body: file,
+						Key: `${folder}/${gcsname}`,
+						ContentType: file.hapi.headers["content-type"],
+						ACL: "public-read"
+					};
+
+					const response = await s3.upload(params, options).promise();
+
+					return resolve({
+						message: "Image uploaded to AWS",
+						image_url: response.Location
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/trending-categories",
+		config: {
+			tags: ["api", "Trending"],
+			description: "Get trending category data",
+			notes: "Get trending category data"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					let trending_snapshot = await db
+						.collection("trending-categories")
+						.get();
+					let trending_categories = [];
+					trending_snapshot.forEach((doc) => {
+						trending_categories.push(doc.data());
+					});
+					return resolve({
+						message: "Trending categories fetched successfully!",
+						trending_categories
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/trending-categories",
+		config: {
+			tags: ["api", "Trending"],
+			description: "Upload product data",
+			notes: "Upload product data",
+			validate: {
+				payload: {
+					id: Joi.string(),
+					image: Joi.string(),
+					type: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("trending-categories")
+						.doc(request.payload.id)
+						.set({
+							id: request.payload.id,
+							image: request.payload.image,
+							type: request.payload.type
+						});
+					return resolve({ message: "Trending category added successfully!" });
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "PUT",
+		path: "/api/trending-categories",
+
+		config: {
+			tags: ["api", "Products"],
+			description: "Update product data",
+			notes: "Update product data by id",
+			cors: {
+				origin: ["*"],
+				additionalHeaders: ["cache-control", "x-requested-with"]
+			},
+			validate: {
+				payload: {
+					id: Joi.string(),
+					image: Joi.string(),
+					type: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				db.collection("trending-categories")
+					.doc(request.payload.id)
+					.set(
+						{
+							id: request.payload.id,
+							image: request.payload.image,
+							type: request.payload.type
+						},
+						{ merge: true }
+					)
+					.then((res) => {
+						return resolve({
+							message: "Trending category edited successfully"
+						});
+					})
+					.catch((err) => {
+						console.log(err.message);
+						return reject(err);
+					});
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path: "/api/trending-categories/{id}",
+		config: {
+			tags: ["api", "Trending"],
+			description: "Delete trending category's data by id",
+			notes: "Delete trending category",
+			validate: {
+				params: Joi.object({
+					id: Joi.string()
+				})
+			},
+			handler: async (request, reply) => {
+				let pr = async (resolve, reject) => {
+					const id = request.params.id;
+
+					try {
+						await db
+							.collection("trending-categories")
+							.doc(id)
+							.delete();
+
+						return resolve({
+							status: "success",
+							message: "Trending category deleted successfully!"
+						});
+					} catch (err) {
+						reject({ message: err.message });
+					}
+				};
+				return new Promise(pr);
+			}
+		}
 	}
 ];
 
