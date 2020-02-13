@@ -2008,9 +2008,9 @@ const routes = [
 	},
 	{
 		method: "GET",
-		path: "/api/Offers",
+		path: "/api/offers",
 		config: {
-			tags: ["api", "offers"],
+			tags: ["api", "Offers"],
 			description: "Get all offers",
 			notes: "Use get method to get all offers"
 		},
