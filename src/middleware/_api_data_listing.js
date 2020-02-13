@@ -1838,18 +1838,15 @@ const routes = [
 							.doc(item_ids[item])
 							.delete();
 					}
-					const order_doc = await db
-						.collection("user-orders")
-						.doc(request.params.user_id)
-						.collection("orders")
-						.add({
-							payment_id: request.payload.payment_id,
-							total_amount: request.payload.total_amount,
-							payment_status: "Payment Sucessful",
-							payment_mode: request.payload.payment_mode,
-							address,
-							items
-						});
+					const order_doc = await db.collection("orders").add({
+						user_id: request.params.user_id,
+						payment_id: request.payload.payment_id,
+						total_amount: request.payload.total_amount,
+						payment_status: "Payment Sucessful",
+						payment_mode: request.payload.payment_mode,
+						address,
+						items
+					});
 					return resolve({
 						message: "Order added successfully",
 						order_id: order_doc.id
@@ -1862,7 +1859,47 @@ const routes = [
 			return new Promise(pr);
 		}
 	},
+	{
+		method: "GET",
+		path: "/api/orders",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Fetch orders of user",
+			notes: "Fetch orders of user"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					let ordersSnapshot = await db.collection("orders").get();
+					let orders = [];
+					ordersSnapshot.forEach((doc) => {
+						orders.push({ id: doc.id, ...doc.data() });
+					});
 
+					for (let index in orders) {
+						for (var index2 in orders[index].items) {
+							var item = orders[index].items[index2];
+							var product_doc = await db
+								.collection("products")
+								.doc(orders[index].items[index2].id)
+								.get();
+							var product_info = product_doc.data();
+							item = { product_info, ...item };
+							orders[index].items[index2] = item;
+						}
+					}
+
+					return resolve({
+						message: "Orders fetched successfully",
+						orders
+					});
+				} catch (err) {
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
 	{
 		method: "GET",
 		path: "/api/orders/{user_id}",
@@ -1879,16 +1916,16 @@ const routes = [
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
-					var ordersSnapshot = await db
-						.collection("user-orders")
-						.doc(request.params.user_id)
+					let ordersSnapshot = await db
 						.collection("orders")
+						.where("user_id", "==", request.params.user_id)
 						.get();
 					let orders = [];
 					ordersSnapshot.forEach((doc) => {
 						orders.push({ id: doc.id, ...doc.data() });
 					});
-					for (var index in orders) {
+
+					for (let index in orders) {
 						for (var index2 in orders[index].items) {
 							var item = orders[index].items[index2];
 							var product_doc = await db
@@ -1896,13 +1933,15 @@ const routes = [
 								.doc(orders[index].items[index2].id)
 								.get();
 							var product_info = product_doc.data();
-							console.log(product_info);
 							item = { product_info, ...item };
 							orders[index].items[index2] = item;
 						}
 					}
 
-					return resolve({ message: "Orders fetched successfully", orders });
+					return resolve({
+						message: "Orders fetched successfully",
+						orders
+					});
 				} catch (err) {
 					return reject(err);
 				}
