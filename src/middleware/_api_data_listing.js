@@ -2211,7 +2211,7 @@ const routes = [
 		method: "DELETE",
 		path: "/api/offers/{id}",
 		config: {
-			tags: ["api", "offers"],
+			tags: ["api", "Offers"],
 			description: "Delete offer data by ID",
 			notes: "Delete offer data using offer ID",
 			validate: {
