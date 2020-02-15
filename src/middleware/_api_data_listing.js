@@ -1847,7 +1847,8 @@ const routes = [
 						payment_status: "Payment Sucessful",
 						payment_mode: request.payload.payment_mode,
 						address,
-						items
+						items,
+						placed_on: Date.now()
 					});
 
 					const newTrack = {
