@@ -2,6 +2,8 @@ let Joi = require("joi");
 import admin from "../firebase/firebaseConfig";
 import AWS from "aws-sdk";
 var _ = require("lodash");
+import axios from "axios";
+const DELHIVERY_TOKEN = "cbbb56b309ca4ee8e75f1abde14fc29a952530f6";
 //configuring the AWS environment
 AWS.config.update({
 	accessKeyId: "AKIAILVU3EZSDE7OZX2A",
@@ -306,7 +308,6 @@ const routes = [
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
-					const offer_id = request.params.offer_id;
 					const product_snapshot = await db.collection("products").get();
 					var products = [];
 
@@ -2562,6 +2563,39 @@ const routes = [
 				};
 				return new Promise(pr);
 			}
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/pincode/{pincode}",
+		config: {
+			tags: ["api", "Delhivery"],
+			description: "Get pincode servicability",
+			notes: "Get pincode servicability",
+			validate: {
+				params: Joi.object({
+					pincode: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const pincode = request.params.pincode;
+					const response = await axios.get(
+						`https://track.delhivery.com/c/api/pin-codes/json/?token=${DELHIVERY_TOKEN}&filter_codes=${pincode}`,
+						{ headers: { Authorization: `Token ${DELHIVERY_TOKEN}` } }
+					);
+					console.log(response.data);
+					return resolve({
+						data: response.data
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
 		}
 	}
 ];
