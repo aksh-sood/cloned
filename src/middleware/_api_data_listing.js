@@ -1951,14 +1951,13 @@ const routes = [
 	},
 	{
 		method: "GET",
-		path: "/api/orders/{user_id}/{order_id}",
+		path: "/api/orders/by-order-id/{order_id}",
 		config: {
 			tags: ["api", "Checkout"],
 			description: "Fetch order by id of user",
 			notes: "Fetch order by id of user",
 			validate: {
 				params: Joi.object({
-					user_id: Joi.string(),
 					order_id: Joi.string()
 				})
 			}
@@ -1967,13 +1966,10 @@ const routes = [
 			let pr = async (resolve, reject) => {
 				try {
 					var order_doc = await db
-						.collection("user-orders")
-						.doc(request.params.user_id)
 						.collection("orders")
 						.doc(request.params.order_id)
 						.get();
 					let order = { id: order_doc.id, ...order_doc.data() };
-
 					for (var index in order.items) {
 						var item = order.items[index];
 						var product_doc = await db
