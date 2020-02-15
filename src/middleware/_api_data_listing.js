@@ -1839,6 +1839,7 @@ const routes = [
 							.doc(item_ids[item])
 							.delete();
 					}
+
 					const order_doc = await db.collection("orders").add({
 						user_id: request.params.user_id,
 						payment_id: request.payload.payment_id,
@@ -1848,12 +1849,124 @@ const routes = [
 						address,
 						items
 					});
+
+					const newTrack = {
+						shipments: [
+							{
+								add: address.full_address,
+								phone: address.phone,
+								payment_mode: request.payload.payment_mode,
+								name: address.full_name,
+								pin: address.pincode,
+								order: order_doc.id
+							}
+						],
+						pickup_location: {
+							name: "client-warehouse-name-as-registered-with-delhivery"
+						}
+					};
+					const res = await axios.post(
+						"https://track.delhivery.com/api/cmu/create.json",
+						newTrack,
+						{
+							headers: { Authorization: `Token ${DELHIVERY_TOKEN}` },
+							["Content-Type"]: "application/json"
+						}
+					);
+					console.log(res);
 					return resolve({
 						message: "Order added successfully",
-						order_id: order_doc.id
+						order_id: order_doc.id,
+						response: res
 					});
 				} catch (err) {
 					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/checkout/test",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Test API",
+			notes: "Test API"
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					const newTrack = {
+						shipments: [
+							{
+								add: "xyz",
+								phone: "7809477220",
+								payment_mode: "COD",
+								name: "raaj",
+								pin: "460002",
+								order: "XYZRAAJ2045"
+							}
+						],
+						pickup_location: {
+							name: "client-warehouse-name-as-registered-with-delhivery"
+						}
+					};
+					const res = await axios.post(
+						"https://track.delhivery.com/api/cmu/create.json",
+						newTrack,
+						{
+							headers: { Authorization: `Token ${DELHIVERY_TOKEN}` },
+							["Content-Type"]: "application/json"
+						}
+					);
+					console.log(res);
+					return resolve({
+						response: res
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "GET",
+		path: "/api/orders/by-order-id/{order_id}",
+		config: {
+			tags: ["api", "Checkout"],
+			description: "Fetch order by id of user",
+			notes: "Fetch order by id of user",
+			validate: {
+				params: Joi.object({
+					order_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					var order_doc = await db
+						.collection("orders")
+						.doc(request.params.order_id)
+						.get();
+					let order = { id: order_doc.id, ...order_doc.data() };
+					for (var index in order.items) {
+						var item = order.items[index];
+						var product_doc = await db
+							.collection("products")
+							.doc(order.items[index].id)
+							.get();
+						var product_info = product_doc.data();
+						item = { product_info, ...item };
+						order.items[index] = item;
+					}
+
+					return resolve({ message: "Orders fetched successfully", order });
+				} catch (err) {
 					return reject(err);
 				}
 			};
@@ -1951,12 +2064,12 @@ const routes = [
 		}
 	},
 	{
-		method: "GET",
+		method: "POST",
 		path: "/api/orders/by-order-id/{order_id}",
 		config: {
 			tags: ["api", "Checkout"],
-			description: "Fetch order by id of user",
-			notes: "Fetch order by id of user",
+			description: "Cancel order by order id",
+			notes: "Cancel order by order id",
 			validate: {
 				params: Joi.object({
 					order_id: Joi.string()
@@ -1982,8 +2095,26 @@ const routes = [
 						order.items[index] = item;
 					}
 
-					return resolve({ message: "Orders fetched successfully", order });
+					await db.collection("cancelled-orders").add(order);
+					await db
+						.collection("orders")
+						.doc(request.params.order_id)
+						.delete();
+					const res = await axios.post(
+						"https://track.delhivery.com/api/p/edit",
+						{
+							waybill: "waybill no.",
+							cancellation: "true"
+						},
+						{
+							headers: { Authorization: `Token ${DELHIVERY_TOKEN}` },
+							["Content-Type"]: "application/json"
+						}
+					);
+					console.log(res);
+					return resolve({ message: "Order deleted successfully" });
 				} catch (err) {
+					console.log(err.message);
 					return reject(err);
 				}
 			};
