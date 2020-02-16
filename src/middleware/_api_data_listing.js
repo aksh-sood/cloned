@@ -352,7 +352,19 @@ const routes = [
 						.collection("products")
 						.doc(id)
 						.get();
-					var product = { id: product_doc.id, ...product_doc.data() };
+					let product = {
+						id: product_doc.id,
+						...product_doc.data(),
+						reviews: []
+					};
+					const reviews_snapshot = await db
+						.collection("product-reviews")
+						.where("product_id", "==", product_doc.id)
+						.get();
+
+					reviews_snapshot.forEach((doc) => {
+						product.reviews.push({ id: doc.id, ...doc.data() });
+					});
 
 					return resolve({
 						status: "success",
@@ -773,6 +785,170 @@ const routes = [
 				};
 				return new Promise(pr);
 			}
+		}
+	},
+
+	{
+		method: "POST",
+		path: "/api/products/${product_id}/reviews",
+		config: {
+			tags: ["api", "Products"],
+			description: "Post product review by product id",
+			notes: "Post product review by product id",
+			validate: {
+				params: Joi.object({
+					product_id: Joi.string()
+				}),
+				payload: {
+					review: Joi.string(),
+					user_id: Joi.string(),
+					user_name: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("product-reviews")
+						.doc(request.params.product_id)
+						.add({
+							review: request.payload.review,
+							user_id: request.payload.user_id,
+							user_name: request.payload.user_name
+						});
+
+					return resolve({
+						status: "success",
+						message: "Product review added successfully"
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "POST",
+		path: "/api/products/${product_id}/reviews",
+		config: {
+			tags: ["api", "Products"],
+			description: "Post product review by product id",
+			notes: "Post product review by product id",
+			validate: {
+				params: Joi.object({
+					product_id: Joi.string()
+				}),
+				payload: {
+					review: Joi.string(),
+					user_id: Joi.string(),
+					user_name: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db.collection("product-reviews").add({
+						product_id: request.params.product_id,
+						review: request.payload.review,
+						user_id: request.payload.user_id,
+						user_name: request.payload.user_name
+					});
+
+					return resolve({
+						status: "success",
+						message: "Product review added successfully"
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "PUT",
+		path: "/api/products/${product_id}/reviews/${review_id}",
+		config: {
+			tags: ["api", "Products"],
+			description: "Update product review by product id",
+			notes: "Update product review by product id",
+			validate: {
+				params: Joi.object({
+					product_id: Joi.string(),
+					review_id: Joi.string()
+				}),
+				payload: {
+					review: Joi.string(),
+					user_id: Joi.string(),
+					user_name: Joi.string()
+				}
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("product-reviews")
+						.doc(request.params.review_id)
+						.set(
+							{
+								id: request.params.product_id,
+								review: request.payload.review,
+								user_id: request.payload.user_id,
+								user_name: request.payload.user_name
+							},
+							{ merge: true }
+						);
+
+					return resolve({
+						status: "success",
+						message: "Product review updated successfully"
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
+		}
+	},
+	{
+		method: "DELETE",
+		path: "/api/products/reviews/${review_id}",
+		config: {
+			tags: ["api", "Products"],
+			description: "Delete product review by product id",
+			notes: "Delete product review by product id",
+			validate: {
+				params: Joi.object({
+					product_id: Joi.string(),
+					review_id: Joi.string()
+				})
+			}
+		},
+		handler: async (request, reply) => {
+			let pr = async (resolve, reject) => {
+				try {
+					await db
+						.collection("product-reviews")
+						.doc(request.params.review_id)
+						.delete();
+
+					return resolve({
+						status: "success",
+						message: "Product review deleted successfully"
+					});
+				} catch (err) {
+					console.log(err.message);
+					return reject(err);
+				}
+			};
+			return new Promise(pr);
 		}
 	},
 	{
