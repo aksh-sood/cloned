@@ -1976,7 +1976,9 @@ const routes = [
 					payment_id: Joi.string(),
 					total_amount: Joi.string(),
 					address_id: Joi.string(),
-					payment_mode: Joi.string()
+					payment_mode: Joi.string(),
+					advance_amount: Joi.string(),
+					cod_amount: Joi.string()
 				},
 				params: Joi.object({
 					user_id: Joi.string()
@@ -2024,6 +2026,8 @@ const routes = [
 						payment_mode: request.payload.payment_mode,
 						address,
 						items,
+						advance_amount: request.payload.advance_amount,
+						cod_amount: request.payload.cod_amount,
 						placed_on: Date.now()
 					});
 
