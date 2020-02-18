@@ -789,7 +789,7 @@ const routes = [
 	},
 
 	{
-		method: "POST",
+		method: "GET",
 		path: "/api/products/${product_id}/reviews",
 		config: {
 			tags: ["api", "Products"],
@@ -809,18 +809,19 @@ const routes = [
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
 				try {
-					await db
+					let review_snapshot = await db
 						.collection("product-reviews")
-						.doc(request.params.product_id)
-						.add({
-							review: request.payload.review,
-							user_id: request.payload.user_id,
-							user_name: request.payload.user_name
-						});
+						.where("product_id", "==", request.params.product_id)
+						.get();
+					let reviews = [];
+					review_snapshot.forEach((doc) => {
+						reviews.push({ id: doc.id, ...doc.data() });
+					});
 
 					return resolve({
 						status: "success",
-						message: "Product review added successfully"
+						message: "Product reviews fetched successfully",
+						reviews
 					});
 				} catch (err) {
 					console.log(err.message);
@@ -2054,7 +2055,6 @@ const routes = [
 							["Content-Type"]: "application/json"
 						}
 					);
-					console.log(res);
 					return resolve({
 						message: "Order added successfully",
 						order_id: order_doc.id,
