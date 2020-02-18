@@ -793,18 +793,8 @@ const routes = [
 		path: "/api/products/${product_id}/reviews",
 		config: {
 			tags: ["api", "Products"],
-			description: "Post product review by product id",
-			notes: "Post product review by product id",
-			validate: {
-				params: Joi.object({
-					product_id: Joi.string()
-				}),
-				payload: {
-					review: Joi.string(),
-					user_id: Joi.string(),
-					user_name: Joi.string()
-				}
-			}
+			description: "GeT product review by product id",
+			notes: "GeT product review by product id"
 		},
 		handler: async (request, reply) => {
 			let pr = async (resolve, reject) => {
